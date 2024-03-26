@@ -16,8 +16,8 @@ db schema:
 - items we want to track:
   - user
     - user_id (primary key)
-    - name
-    - email 
+    - name <- encrypt at rest
+    - email <- encrypt at rest
     - password <- need to be hashed
   - account
     - account_id (primary key)
