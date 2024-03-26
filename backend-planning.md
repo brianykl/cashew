@@ -11,3 +11,27 @@ what to think about:
   - api calls to plaid
   - encryption/decryption
   - storing/fetching/deleting data stored in server-side db supporting graphql queries
+
+db schema:
+- items we want to track:
+  - user
+    - user_id (primary key)
+    - name
+    - email 
+    - password <- need to be hashed
+  - account
+    - account_id (primary key)
+    - user_id (foreign key to user)
+    - account_type
+    - account_name
+  - transaction
+    - transaction_id (primary key)
+    - account_id (foreign key to account)
+    - category_id (foreign key to category)
+    - amount
+    - date
+    - vendor_name
+    - description
+  - category
+    - name
+    - description
