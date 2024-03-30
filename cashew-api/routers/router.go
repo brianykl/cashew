@@ -22,4 +22,6 @@ func init() {
 		),
 	)
 	beego.AddNamespace(ns)
+	beego.Router("/oauth/redirect", &controllers.OAuthController{}, "get:Redirect")
+	beego.Router("/oauth/callback", &controllers.OAuthController{}, "get:Callback")
 }
