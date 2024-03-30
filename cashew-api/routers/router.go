@@ -8,6 +8,7 @@
 package routers
 
 import (
+	"cashew-api/conf"
 	"cashew-api/controllers"
 
 	beego "github.com/beego/beego/v2/server/web"
@@ -22,6 +23,10 @@ func init() {
 		),
 	)
 	beego.AddNamespace(ns)
-	beego.Router("/oauth/redirect", &controllers.OAuthController{}, "get:Redirect")
-	beego.Router("/oauth/callback", &controllers.OAuthController{}, "get:Callback")
+
+	oauthConfig := conf.LoadOAuthConfig()
+	oauthController := controllers.NewOAuthController(*oauthConfig)
+
+	beego.Router("/oauth/redirect", oauthController, "get:Redirect")
+	beego.Router("/oauth/callback", oauthController, "get:Callback")
 }

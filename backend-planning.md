@@ -1,3 +1,6 @@
+VERY IMPORTANT: be careful w ppls financial data, i need to read this and try to enforce best practices
+https://ofdss.org/#documents
+
 need-to-dos:
 - authorizing users through OAuth2.0
 - load monthly-recurring spend and break-down? does this need to be saved in our db or should we grab whenever user logs in? should this be cached?
@@ -11,6 +14,14 @@ what to think about:
   - api calls to plaid
   - encryption/decryption
   - storing/fetching/deleting data stored in server-side db supporting graphql queries
+
+api calls to plaid:
+- i think most things can be handles with the /transactions endpoint, ntd rn is read through that documentation
+- /transactions/sync can subscribe to all transactions associated with an account and get updates like a stream
+- /transactions/recurring use after, subscribe to RECURRING_TRANSACTIONS_UPDATE webhook
+
+auth0 flow for plaid:
+
 
 db schema:
 - items we want to track:

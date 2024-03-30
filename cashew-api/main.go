@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "cashew-api/conf"
 	_ "cashew-api/routers"
 
 	beego "github.com/beego/beego/v2/server/web"
@@ -8,6 +9,7 @@ import (
 )
 
 func main() {
+
 	if beego.BConfig.RunMode == "dev" {
 		beego.BConfig.WebConfig.DirectoryIndex = true
 		beego.BConfig.WebConfig.StaticDir["/swagger"] = "swagger"

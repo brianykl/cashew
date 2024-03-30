@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"cashew-api/conf"
 	"context"
 	"net/http"
 
@@ -11,6 +12,13 @@ import (
 
 type OAuthController struct {
 	beego.Controller
+	oauthConfig conf.OAuthConfig
+}
+
+func NewOAuthController(cfg conf.OAuthConfig) *OAuthController {
+	return &OAuthController{
+		oauthConfig: cfg,
+	}
 }
 
 var oauthConfig = &oauth2.Config{
