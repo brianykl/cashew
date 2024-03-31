@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+option go_package = "github.com/brianykl/cashew/services/crypto/proto";
+
+service CryptoService {
+    rpc HashPassword(HashPasswordRequest) returns (HashPasswordResponse);
+    rpc VerifyPassword(VerifyPasswordRequest) returns (VerifyPasswordResponse);
+    rpc Encrypt(EncryptRequest) returns (EncryptResponse);
+    rpc Decrypt(DecryptRequest) returns (DecryptResponse);
+}
+
+message HashPasswordRequest {
+    string password = 1;
+    Argon2idParams params = 2;
+}
+
+message HashPasswordResponse {
+    string encodedHash = 1;
+}
+
+message VerifyPasswordRequest {
+    string password = 1;
+    string encodedHash = 2;
+    Argon2idParams params = 3;
+}
+
+message VerifyPasswordResponse {
+    bool isValid = 1;
+}
+
+message EncryptRequest {
+    string plaintext = 1;
+    bytes key = 2;
+}
+
+message EncryptResponse {
+    string ciphertext = 1;
+}
+
+message DecryptRequest {
+    string ciphertext = 1;
+    bytes key = 2;
+}
+
+message DecryptResponse {
+    string plaintext = 1;
+}
+
+message Argon2idParams {
+    uint32 memory = 1;
+    uint32 iterations = 2;
+    uint32 parallelism = 3;
+    uint32 saltLength = 4;
+    uint32 keyLength = 5;
+}

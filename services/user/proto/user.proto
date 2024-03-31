@@ -1,0 +1,40 @@
+syntax = "proto3";
+package user;
+
+option go_package = "github.com/brianykl/cashew/services/user/proto";
+
+service UserService {
+
+    rpc GetUser (GetUserRequest) returns (UserResponse);
+
+    rpc CreateUser (CreateUserRequest) returns (UserResponse);
+
+    rpc UpdateUser (UpdateUserRequest) returns (UserResponse);
+
+}
+
+
+message GetUserRequest {
+    string user_id = 1;
+}
+
+message CreateUserRequest {
+    string user_id = 1;
+    string email = 2;
+    string name = 3;
+    string password = 4;
+}
+
+message UpdateUserRequest {
+    string user_id = 1;
+    string email = 2;
+    string name = 3;
+    string password = 4;
+}
+
+message UserResponse {
+    string user_id = 1;
+    string email = 2;
+    string name = 3;
+    string password = 4;
+}

@@ -10,10 +10,20 @@ need-to-dos:
 
 what to think about:
 - how to organize into microservices? need gRPC calls for all microservices
-  - authorization
-  - api calls to plaid
-  - encryption/decryption
-  - storing/fetching/deleting data stored in server-side db supporting graphql queries
+  - user management
+    - user registration
+    - user authentication
+    - profile mgmt
+  - transactions analysis
+    - plaid api calls to get transactions
+    - categorization?
+    - pulling/maintaining history
+  - account management
+    - links new accounts, updating account details, synchronizing through plaid
+  - analytics/recommendation engine
+    - llm wrapper
+  - security/cryptography
+    - make stuff safe
 
 api calls to plaid:
 - i think most things can be handles with the /transactions endpoint, ntd rn is read through that documentation
