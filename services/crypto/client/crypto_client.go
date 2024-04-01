@@ -41,3 +41,21 @@ func (c *CryptoClient) HashPassword(ctx context.Context, naked_pw string, params
 
 	return c.service.HashPassword(ctx, req)
 }
+
+func (c *CryptoClient) VerifyPassword(ctx context.Context, password, encodedHash string, params *Argon2IdParams) (*cryptopb.VerifyPasswordResponse, error) {
+	pbParams := &cryptopb.Argon2IdParams{
+		Memory:      params.Memory,
+		Iterations:  params.Iterations,
+		Parallelism: uint32(params.Parallelism),
+		SaltLength:  params.SaltLength,
+		KeyLength:   params.KeyLength,
+	}
+
+	req := &cryptopb.VerifyPasswordRequest{
+		Password:    password,
+		EncodedHash: encodedHash,
+		Params:      pbParams,
+	}
+
+	return c.service.VerifyPassword(ctx, req)
+}
