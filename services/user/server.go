@@ -121,7 +121,7 @@ func main() {
 	userServer := &userServer{db: db}
 	userpb.RegisterUserServiceServer(s, userServer)
 
-	log.Printf("User service server listening at %v", lis.Addr())
+	log.Printf("user service server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}

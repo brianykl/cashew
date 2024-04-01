@@ -19,6 +19,7 @@ func NewUserClientWithConn(cc *grpc.ClientConn) *UserClient {
 	return &UserClient{service: service}
 }
 
+// this is for if i want to encapsulate the grpc connection stuff within my connection, otherwise its more complicated in cashew-api
 func NewUserClient(serviceAddress string) (*UserClient, error) {
 	conn, err := grpc.Dial(serviceAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
