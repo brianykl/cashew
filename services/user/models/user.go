@@ -1,14 +1,23 @@
 package models
 
-// import (
-// 	"github.com/brianykl/cashew/cashew-api/crypto"
-// )
+import (
+	"github.com/google/uuid"
+)
 
 type User struct {
 	UserID   string `gorm:"column:user_id;primaryKey"`
 	Email    string `gorm:"column:email;unique"`
 	Name     string `gorm:"column:name"`
 	Password string `gorm:"column:password"`
+}
+
+func NewUser(email, name, password string) (*User, error) {
+	return &User{
+		UserID:   generateUserID(),
+		Email:    email,
+		Name:     name,
+		Password: password,
+	}, nil
 }
 
 // func NewUser(userID, email, name, password string, key []byte) (*User, error) {
@@ -55,4 +64,9 @@ func ChangeUserPassword(userID, new_password string) error {
 
 func DeleteUser(userID string) error {
 	return nil
+}
+
+func generateUserID() string {
+	id := uuid.New()
+	return id.String()
 }
