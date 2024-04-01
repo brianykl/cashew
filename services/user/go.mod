@@ -8,7 +8,10 @@ require (
 	google.golang.org/protobuf v1.33.0
 	gorm.io/driver/postgres v1.5.7
 	gorm.io/gorm v1.25.9
+	github.com/brianykl/cashew/services/crypto v1.0.0
 )
+
+replace github.com/brianykl/cashew/services/crypto v1.0.0 => "../crypto"
 
 require (
 	github.com/golang/protobuf v1.5.3 // indirect

@@ -54,7 +54,7 @@ func (s *cryptoServer) VerifyPassword(ctx context.Context, req *cryptopb.VerifyP
 		IsValid: false,
 	}
 	if len(parts) != 2 {
-		return &result, nil // Incorrect hash format
+		return &result, nil // incorrect hash format
 	}
 	salt, err := base64.RawStdEncoding.DecodeString(parts[0])
 	if err != nil {
