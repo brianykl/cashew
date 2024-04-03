@@ -5,8 +5,8 @@ import (
 	"log"
 	"net"
 
-	usermodels "github.com/brianykl/cashew/services/user/models"
-	userpb "github.com/brianykl/cashew/services/user/pb"
+	usermodels "github.com/brianykl/cashew/services/users/models"
+	userpb "github.com/brianykl/cashew/services/users/pb"
 
 	"errors"
 

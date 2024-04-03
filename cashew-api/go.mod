@@ -5,7 +5,7 @@ go 1.21.6
 require github.com/beego/beego/v2 v2.1.0
 
 require (
-	github.com/brianykl/cashew/services/user v1.0.0
+	github.com/brianykl/cashew/services/users v1.0.0
 	github.com/smartystreets/goconvey v1.6.4
 	golang.org/x/crypto v0.18.0
 	golang.org/x/oauth2 v0.16.0
@@ -14,7 +14,7 @@ require (
 	gorm.io/gorm v1.25.9
 )
 
-replace github.com/brianykl/cashew/services/user v1.0.0 => ../services/user
+replace github.com/brianykl/cashew/services/users v1.0.0 => ../services/users
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect

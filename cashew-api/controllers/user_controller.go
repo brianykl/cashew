@@ -4,7 +4,7 @@ import (
 	"context"
 
 	beego "github.com/beego/beego/v2/server/web"
-	"github.com/brianykl/cashew/services/user/client"
+	"github.com/brianykl/cashew/services/users/client"
 )
 
 type UserController struct {
