@@ -25,6 +25,24 @@ func NewCryptoClient(cc *grpc.ClientConn) *CryptoClient {
 	return &CryptoClient{service: service}
 }
 
+func (c *CryptoClient) Encrypt(ctx context.Context, plaintext string, key []byte) (*cryptopb.EncryptResponse, error) {
+	req := &cryptopb.EncryptRequest{
+		Plaintext: plaintext,
+		Key:       key,
+	}
+
+	return c.service.Encrypt(ctx, req)
+}
+
+func (c *CryptoClient) Decrypt(ctx context.Context, ciphertext string, key []byte) (*cryptopb.DecryptResponse, error) {
+	req := &cryptopb.DecryptRequest{
+		Ciphertext: ciphertext,
+		Key:        key,
+	}
+
+	return c.service.Decrypt(ctx, req)
+}
+
 func (c *CryptoClient) HashPassword(ctx context.Context, naked_pw string, params *Argon2IdParams) (*cryptopb.HashPasswordResponse, error) {
 	pbParams := &cryptopb.Argon2IdParams{
 		Memory:      params.Memory,

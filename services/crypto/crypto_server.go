@@ -2,8 +2,11 @@ package main
 
 import (
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
+	"io"
 	"log"
 	"net"
 	"strings"
@@ -16,6 +19,67 @@ import (
 
 type cryptoServer struct {
 	cryptopb.UnimplementedCryptoServiceServer
+}
+
+func (s *cryptoServer) Encrypt(ctx context.Context, req *cryptopb.EncryptRequest) (*cryptopb.EncryptResponse, error) {
+	plaintext := req.Plaintext
+	key := req.Key
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return nil, err
+	}
+
+	ciphertext := gcm.Seal(nonce, nonce, []byte(plaintext), nil)
+
+	response := cryptopb.EncryptResponse{
+		Ciphertext: base64.StdEncoding.EncodeToString(ciphertext),
+	}
+	return &response, nil
+}
+
+func (s *cryptoServer) Decrypt(ctx context.Context, req *cryptopb.DecryptRequest) (*cryptopb.DecryptResponse, error) {
+	ciphertext := req.Ciphertext
+	key := req.Key
+
+	data, err := base64.StdEncoding.DecodeString(ciphertext)
+	if err != nil {
+		return nil, err
+	}
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(data) < gcm.NonceSize() {
+		return nil, err
+	}
+
+	nonce, ciphertextData := data[:gcm.NonceSize()], data[gcm.NonceSize():]
+	plaintext, err := gcm.Open(nil, nonce, ciphertextData, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	response := cryptopb.DecryptResponse{
+		Plaintext: string(plaintext),
+	}
+	return &response, nil
 }
 
 func (s *cryptoServer) HashPassword(ctx context.Context, req *cryptopb.HashPasswordRequest) (*cryptopb.HashPasswordResponse, error) {
