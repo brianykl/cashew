@@ -18,10 +18,18 @@ func init() {
 	ns := beego.NewNamespace("/v1",
 		beego.NSNamespace("/object",
 			beego.NSInclude(
-				&controllers.ObjectController{},
-			),
+				&controllers.ObjectController{}),
+		),
+		beego.NSNamespace("user",
+			beego.NSInclude(
+				&controllers.UserController{}),
+		),
+		beego.NSNamespace("/oauth",
+			beego.NSInclude(
+				&controllers.OAuthController{}),
 		),
 	)
+
 	beego.AddNamespace(ns)
 
 	oauthConfig := conf.LoadOAuthConfig()
