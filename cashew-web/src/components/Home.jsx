@@ -1,25 +1,25 @@
-import logo from './logo.svg';
-import './App.css';
+import logo from '../assets/cashew.svg';
+import { Login } from '../components/Login';
 
-function App() {
-  return (
+export function Home() {
+	return (
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
+        <a>
+          cash doesn't grow on trees.
+        </a>
+        <Login />
         <a
           className="App-link"
           href="https://reactjs.org"
           target="_blank"
           rel="noopener noreferrer"
         >
-          Learn React
+          check out my github
         </a>
       </header>
     </div>
   );
 }
 
-export default App;
