@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 
 	beego "github.com/beego/beego/v2/server/web"
 	"github.com/brianykl/cashew/services/users/client"
@@ -9,6 +10,7 @@ import (
 
 type UserController struct {
 	beego.Controller
+	UserClient *client.UserClient
 }
 
 type UserData struct {
@@ -17,32 +19,70 @@ type UserData struct {
 	Password string `json:"password"`
 }
 
-func (c *UserController) Post() {
-	var userData UserData
-	err := c.Ctx.Input.Bind(&userData, "body")
+func (c *UserController) Prepare() {
+	var err error
+	c.UserClient, err = client.NewUserClient("localhost:50051")
 	if err != nil {
-		c.Abort("400")
+		c.Ctx.Output.SetStatus(500)
+		c.Ctx.Output.Body([]byte("failed to connect to user microservice"))
 		return
 	}
+}
 
-	userClient, err := client.NewUserClient("address-of-user-service:port")
-	if err != nil {
-		c.Abort("500")
-		return
+func (c *UserController) CreateUser() {
+	var inputData struct {
+		Email    string `json:"email"`
+		Name     string `json:"name"`
+		Password string `json:"password"`
 	}
+	json.Unmarshal(c.Ctx.Input.RequestBody, &inputData)
 
-	ctx := context.Background()
-	response, err := userClient.CreateUser(ctx, userData.Name, userData.Email, userData.Password)
+	response, err := c.UserClient.CreateUser(context.Background(), inputData.Name, inputData.Email, inputData.Password)
 	if err != nil {
-		c.Abort("500")
-		return
+		c.Data["json"] = map[string]string{"error": err.Error()}
+		c.Ctx.Output.SetStatus(500)
+	} else {
+		c.Data["json"] = response
 	}
+	c.ServeJSON()
+}
 
-	c.Data["json"] = map[string]interface{}{
-		"UserID":   response.UserId,
-		"Email":    response.Email,
-		"Name":     response.Name,
-		"Password": response.Password,
+func (c *UserController) GetUser() {
+	var inputData struct {
+		UserId string `json:"userid"`
+	}
+	json.Unmarshal(c.Ctx.Input.RequestBody, &inputData)
+
+	response, err := c.UserClient.GetUser(context.Background(), inputData.UserId)
+	if err != nil {
+		c.Data["json"] = map[string]string{"error": err.Error()}
+		c.Ctx.Output.SetStatus(500)
+	} else {
+		c.Data["json"] = response
+	}
+	c.ServeJSON()
+}
+
+func (c *UserController) UpdateUser() {
+	var inputData struct {
+		UserId   string `json:"userid"`
+		Email    string `json:"email"`
+		Name     string `json:"name"`
+		Password string `json:"password"`
+	}
+	json.Unmarshal(c.Ctx.Input.RequestBody, &inputData)
+
+	response, err := c.UserClient.UpdateUser(
+		context.Background(),
+		inputData.UserId,
+		inputData.Name,
+		inputData.Email,
+		inputData.Password)
+	if err != nil {
+		c.Data["json"] = map[string]string{"error": err.Error()}
+		c.Ctx.Output.SetStatus(500)
+	} else {
+		c.Data["json"] = response
 	}
 	c.ServeJSON()
 }
