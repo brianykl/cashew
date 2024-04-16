@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 export function UserRegistration() {
     const [userData, setUserData] = useState({
         email: '',
+        name: '',
         password: '',
         confirmPassword: ''
     });
@@ -24,8 +25,28 @@ export function UserRegistration() {
             alert('passwords do not match!');
             return; 
         }
+
         console.log('user data:', userData);
-        // registration logic, call user microservice
+        fetch('beego api endpoint', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                email: userData.email,
+                name: userData.name,
+                password: userData
+
+            })
+        })
+        .then(data => {
+            console.log('success:', data);
+            // redirect or do somehting if successful
+        })
+        .catch((error) => {
+            console.error("error: ", error);
+            alert("error during user registration")
+        })
     };
 
     return (
@@ -38,6 +59,14 @@ export function UserRegistration() {
                     value={userData.email}
                     placeholder="email"
                     onChange={handleChange}
+                    required
+                />
+                <input
+                    type="text"
+                    name="name"
+                    value={userData.name}
+                    placeholder="name"
+                    oonCHange={handleChange}
                     required
                 />
                 <input
