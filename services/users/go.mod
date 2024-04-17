@@ -14,7 +14,6 @@ require (
 replace github.com/brianykl/cashew/services/crypto v1.0.0 => ../crypto
 
 require (
-	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20231201235250-de7065d80cb9 // indirect
 	github.com/jackc/pgx/v5 v5.5.5 // indirect
