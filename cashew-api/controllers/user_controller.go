@@ -21,7 +21,7 @@ type UserData struct {
 
 func (c *UserController) Prepare() {
 	var err error
-	c.UserClient, err = client.NewUserClient("localhost:50051")
+	c.UserClient, err = client.NewUserClient("localhost:5001")
 	if err != nil {
 		c.Ctx.Output.SetStatus(500)
 		c.Ctx.Output.Body([]byte("failed to connect to user microservice"))

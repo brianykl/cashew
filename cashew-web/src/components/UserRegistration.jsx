@@ -27,7 +27,7 @@ export function UserRegistration() {
         }
 
         console.log('user data:', userData);
-        fetch('beego api endpoint', {
+        fetch('http://localhost:3000', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

@@ -107,7 +107,7 @@ func (s *userServer) UpdateUser(ctx context.Context, req *userpb.UpdateUserReque
 }
 
 func main() {
-	lis, err := net.Listen("tcp", ":50052") // Use an appropriate port for your service
+	lis, err := net.Listen("tcp", ":5001") // Use an appropriate port for your service
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}

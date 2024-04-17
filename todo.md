@@ -2,6 +2,14 @@
 - link ports from microservice to backend, backend to frontend
 - start integration testing
 - plan out what happens after user registration
+    - build out figma prototype
 - figure out how to authenticate users for sign in
 - landing page
-- link bank accounts
+    - link bank accounts
+    - options for observability
+- settings
+    - unlinking accounts
+    - clearing data from our databases
+    - deleting user
+- asking people to try it out
+    - interviewing users and figure out whats next

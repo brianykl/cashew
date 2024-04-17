@@ -1,4 +1,4 @@
-import logo from '../assets/cashew.svg';
+import logo from '../assets/cashew.jpg';
 import { Login } from '../components/Login';
 import { useNavigate } from 'react-router-dom';
 
@@ -22,7 +22,7 @@ export function Home() {
         </a>
         <a
           className="App-link"
-          href="https://reactjs.org"
+          href="https://github.com/brianykl"
           target="_blank"
           rel="noopener noreferrer"
         >
