@@ -2,11 +2,15 @@ package models
 
 import (
 	"context"
+	"encoding/hex"
+	"fmt"
+	"log"
 	"time"
 
 	"github.com/brianykl/cashew/services/crypto/client"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type User struct {
@@ -18,9 +22,9 @@ type User struct {
 
 func NewUser(email, name, password string) (*User, error) {
 	cryptoServiceAddress := "localhost:5002"
-	conn, err := grpc.Dial(cryptoServiceAddress, grpc.WithInsecure())
+	conn, err := grpc.NewClient(cryptoServiceAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		// Handle connection errors
+		log.Fatalf("could not connect to crypto service: %v", err)
 	}
 	defer conn.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -35,11 +39,32 @@ func NewUser(email, name, password string) (*User, error) {
 		KeyLength:   32,        // 32-byte output hash
 	}
 
+	// example encryption key, going to figure out how to securely generate and store it
+	hexKey := "f13fd7ee2c6346b67aae8863ec68c170d26766a6fe216485ca5bfdfa1c25b233"
+	key, err := hex.DecodeString(hexKey)
+	if err != nil {
+		log.Printf("error decoding hex key: %v", err)
+		return nil, fmt.Errorf("error decoding hex key: %v", err)
+	}
+	encryptedEmail, err := cryptoClient.Encrypt(ctx, email, key)
+	if err != nil {
+		log.Printf("error encrypting email: %v", err)
+		return nil, fmt.Errorf("error encrypting email: %v", err)
+	}
+	encryptedName, err := cryptoClient.Encrypt(ctx, name, key)
+
+	if err != nil {
+		log.Printf("error encrypting name: %v", err)
+		return nil, fmt.Errorf("error encrypting name: %v", err)
+	}
 	encodedHash, _ := cryptoClient.HashPassword(ctx, password, &params)
+	if err != nil {
+		return nil, fmt.Errorf("error hashing password: %v", err)
+	}
 	return &User{
 		UserID:   generateUserID(),
-		Email:    email,
-		Name:     name,
+		Email:    encryptedEmail.GetCiphertext(),
+		Name:     encryptedName.GetCiphertext(),
 		Password: encodedHash.EncodedHash,
 	}, nil
 }

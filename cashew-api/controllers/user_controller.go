@@ -29,7 +29,7 @@ func (c *UserController) Prepare() {
 	}
 }
 
-func (c *UserController) CreateUser() {
+func (c *UserController) Post() {
 	var inputData struct {
 		Email    string `json:"email"`
 		Name     string `json:"name"`

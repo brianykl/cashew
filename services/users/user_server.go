@@ -31,10 +31,10 @@ func (s *userServer) CreateUser(ctx context.Context, req *userpb.CreateUserReque
 
 	// unsure if this is even necessary as a response, should this just return a bool?
 	response := userpb.UserResponse{
-		UserId:   uuid.New().String(), // generate id
-		Email:    user.Email,          // encrypt email
-		Name:     user.Name,           // encrypt name
-		Password: user.Password,       // hash password
+		UserId:   uuid.New().String(),
+		Email:    user.Email,    // encrypt email
+		Name:     user.Name,     // encrypt name
+		Password: user.Password, // hash password
 	}
 
 	if err := s.db.Create(user).Error; err != nil {

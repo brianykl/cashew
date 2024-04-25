@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"log"
 
 	cryptopb "github.com/brianykl/cashew/services/crypto/pb"
 	"google.golang.org/grpc"
@@ -30,7 +31,7 @@ func (c *CryptoClient) Encrypt(ctx context.Context, plaintext string, key []byte
 		Plaintext: plaintext,
 		Key:       key,
 	}
-
+	log.Printf("we did it!")
 	return c.service.Encrypt(ctx, req)
 }
 
