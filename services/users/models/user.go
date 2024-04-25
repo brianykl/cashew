@@ -41,18 +41,20 @@ func NewUser(email, name, password string) (*User, error) {
 
 	// example encryption key, going to figure out how to securely generate and store it
 	hexKey := "f13fd7ee2c6346b67aae8863ec68c170d26766a6fe216485ca5bfdfa1c25b233"
+
 	key, err := hex.DecodeString(hexKey)
 	if err != nil {
 		log.Printf("error decoding hex key: %v", err)
 		return nil, fmt.Errorf("error decoding hex key: %v", err)
 	}
+
 	encryptedEmail, err := cryptoClient.Encrypt(ctx, email, key)
 	if err != nil {
 		log.Printf("error encrypting email: %v", err)
 		return nil, fmt.Errorf("error encrypting email: %v", err)
 	}
-	encryptedName, err := cryptoClient.Encrypt(ctx, name, key)
 
+	encryptedName, err := cryptoClient.Encrypt(ctx, name, key)
 	if err != nil {
 		log.Printf("error encrypting name: %v", err)
 		return nil, fmt.Errorf("error encrypting name: %v", err)
@@ -61,6 +63,7 @@ func NewUser(email, name, password string) (*User, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error hashing password: %v", err)
 	}
+
 	return &User{
 		UserID:   generateUserID(),
 		Email:    encryptedEmail.GetCiphertext(),
@@ -92,6 +95,11 @@ func NewUser(email, name, password string) (*User, error) {
 // }
 
 func ValidateUser(user *User) error {
+	// decryptedEmail := user.Email
+	// go search db for email
+	// if email does not exist, return invalid credentials
+	// verify provided password against hashed password
+	// if password does not exist, return invalid credentials
 	return nil
 }
 

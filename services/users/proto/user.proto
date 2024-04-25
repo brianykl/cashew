@@ -11,6 +11,8 @@ service UserService {
 
     rpc UpdateUser (UpdateUserRequest) returns (UserResponse);
 
+    rpc VerifyUser (VerifyUserRequest) returns (UserResponse);
+
 }
 
 
@@ -30,6 +32,11 @@ message UpdateUserRequest {
     string email = 2;
     string name = 3;
     string password = 4;
+}
+
+message VerifyUserRequest {
+    string email = 1;
+    string password = 2;
 }
 
 message UserResponse {
