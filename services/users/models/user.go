@@ -17,7 +17,7 @@ type User struct {
 }
 
 func NewUser(email, name, password string) (*User, error) {
-	cryptoServiceAddress := "localhost:50051"
+	cryptoServiceAddress := "localhost:5002"
 	conn, err := grpc.Dial(cryptoServiceAddress, grpc.WithInsecure())
 	if err != nil {
 		// Handle connection errors

@@ -10,8 +10,10 @@ import (
 
 	"errors"
 
+	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 )
@@ -23,15 +25,16 @@ type userServer struct {
 
 // need to write better error handling for this and need to circle back around to implement encryption and hashing
 func (s *userServer) CreateUser(ctx context.Context, req *userpb.CreateUserRequest) (*userpb.UserResponse, error) {
+	log.Printf("we tried it lol")
 	user, _ := usermodels.NewUser(req.Email, req.Name, req.Password)
 	log.Printf("creating user: %s", req.GetName())
 
 	// unsure if this is even necessary as a response, should this just return a bool?
 	response := userpb.UserResponse{
-		UserId:   user.UserID,   // generate id
-		Email:    user.Email,    // encrypt email
-		Name:     user.Name,     // encrypt name
-		Password: user.Password, // hash password
+		UserId:   uuid.New().String(), // generate id
+		Email:    user.Email,          // encrypt email
+		Name:     user.Name,           // encrypt name
+		Password: user.Password,       // hash password
 	}
 
 	if err := s.db.Create(user).Error; err != nil {
@@ -120,6 +123,7 @@ func main() {
 	s := grpc.NewServer()
 	userServer := &userServer{db: db}
 	userpb.RegisterUserServiceServer(s, userServer)
+	reflection.Register(s)
 
 	log.Printf("user service server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
