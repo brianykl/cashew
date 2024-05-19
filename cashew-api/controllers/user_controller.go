@@ -47,6 +47,23 @@ func (c *UserController) Post() {
 	c.ServeJSON()
 }
 
+func (c *UserController) Get() {
+	var loginInfo struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	json.Unmarshal(c.Ctx.Input.RequestBody, &loginInfo)
+
+	response, err := c.UserClient.VerifyUser(context.Background(), loginInfo.Email, loginInfo.Password)
+	if err != nil {
+		c.Data["json"] = map[string]string{"error": err.Error()}
+		c.Ctx.Output.SetStatus(500)
+	} else {
+		c.Data["json"] = response
+	}
+	c.ServeJSON()
+}
+
 func (c *UserController) GetUser() {
 	var inputData struct {
 		UserId string `json:"userid"`
