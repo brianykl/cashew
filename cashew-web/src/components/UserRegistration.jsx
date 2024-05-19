@@ -27,7 +27,7 @@ export function UserRegistration() {
         }
 
         console.log('user data:', userData);
-        fetch('http://localhost:3000/v1/user/create', {
+        fetch('http://localhost:3000/v1/user', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

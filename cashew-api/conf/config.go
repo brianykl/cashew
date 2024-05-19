@@ -1,6 +1,7 @@
 package conf
 
 import (
+	"log"
 	"os"
 
 	"gopkg.in/yaml.v3"
@@ -12,8 +13,11 @@ type OAuthConfig struct {
 }
 
 func LoadOAuthConfig() *OAuthConfig {
-	data, err := os.ReadFile("config.yaml")
+	cwd, _ := os.Getwd()
+	data, err := os.ReadFile("conf/config.yaml")
 	if err != nil {
+		log.Printf("failing here")
+		log.Printf("current working directory:%v", cwd)
 		panic(err)
 	}
 
