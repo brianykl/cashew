@@ -13,6 +13,7 @@ what to think about:
   - user management
     - user registration
     - user authentication
+      - JWT authentication
     - profile mgmt
   - transactions analysis
     - plaid api calls to get transactions

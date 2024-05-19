@@ -55,3 +55,11 @@ func (c *UserClient) UpdateUser(ctx context.Context, id, name, email, password s
 	}
 	return c.service.UpdateUser(ctx, req)
 }
+
+func (c *UserClient) VerifyUser(ctx context.Context, email, password string) (*userpb.UserResponse, error) {
+	req := &userpb.VerifyUserRequest{
+		Email:    email,
+		Password: password,
+	}
+	return c.service.VerifyUser(ctx, req)
+}
