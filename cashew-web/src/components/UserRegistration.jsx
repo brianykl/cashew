@@ -20,6 +20,7 @@ export function UserRegistration() {
     };
 
     const handleSubmit = (event) => {
+        console.log("registering user...")
         event.preventDefault();
         if (userData.password !== userData.confirmPassword) {
             alert('passwords do not match!');
@@ -41,6 +42,7 @@ export function UserRegistration() {
         })
         .then(data => {
             console.log('success:', data);
+            
             // redirect or do somehting if successful
         })
         .catch((error) => {
@@ -66,7 +68,7 @@ export function UserRegistration() {
                     name="name"
                     value={userData.name}
                     placeholder="name"
-                    oonCHange={handleChange}
+                    onChange={handleChange}
                     required
                 />
                 <input
