@@ -28,7 +28,7 @@ export function UserRegistration() {
         }
 
         console.log('user data:', userData);
-        fetch('http://localhost:3000/v1/user', {
+        fetch('http://localhost:4000/v1/user', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -42,7 +42,7 @@ export function UserRegistration() {
         })
         .then(data => {
             console.log('success:', data);
-            
+
             // redirect or do somehting if successful
         })
         .catch((error) => {

@@ -16,10 +16,6 @@ import (
 
 func init() {
 	ns := beego.NewNamespace("/v1",
-		beego.NSNamespace("/object",
-			beego.NSInclude(
-				&controllers.ObjectController{}),
-		),
 		beego.NSNamespace("/user",
 			beego.NSInclude(
 				&controllers.UserController{}),
@@ -35,6 +31,7 @@ func init() {
 	oauthConfig := conf.LoadOAuthConfig()
 	oauthController := controllers.NewOAuthController(*oauthConfig)
 
-	beego.Router("/oauth/redirect", oauthController, "get:Redirect")
-	beego.Router("/oauth/callback", oauthController, "get:Callback")
+	beego.Router("/v1/oauth/redirect", oauthController, "get:Redirect")
+	beego.Router("/v1/oauth/callback", oauthController, "get:Callback")
+	beego.Router("/v1/user", &controllers.UserController{}, "post:Post")
 }
