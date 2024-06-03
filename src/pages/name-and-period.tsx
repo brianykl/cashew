@@ -1,61 +1,64 @@
-import { useState, ChangeEvent, FormEvent } from 'react';
+import { useState, FormEvent, ChangeEvent } from 'react';
 import { useRouter } from 'next/router';
+import InputMask from 'react-input-mask';
 
 const NameAndPeriod: React.FC = () => {
-    const [name, setName] = useState<string>('');
-    const [startDate, setStartDate] = useState<string>('');
-    const [endDate, setEndDate] = useState<string>('');
-    const router = useRouter();
+  const [name, setName] = useState<string>('');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
+  const router = useRouter();
 
-    const handleNameChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setName(e.target.value);
-      };
-    
-      const handleStartDateChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setStartDate(e.target.value);
-      };
-    
-      const handleEndDateChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setEndDate(e.target.value);
-      };
-    
-    const handleSubmit = (e: FormEvent) => {
-        e.preventDefault();
-        // something, assume we handle form data here or pass to next page
-        router.push('/categories'); // next page
-    };
+  const handleNameChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setName(e.target.value);
+  };
 
-    return (
-        <div className="container">
-            <h1>basic info</h1>
-            <form onSubmit={handleSubmit}>
-                <label htmlFor='name'> what's your name?</label>
-                <input
-                    type="text"
-                    id="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                />
-                <label htmlFor='startDate'> when do you want this budget to start?</label>
-                <input
-                    type="date"
-                    id="startDate"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    required
-                />
-                <label htmlFor='endDate'> when do you want this budget to end?</label>
-                <input
-                    type="date"
-                    id="endDate"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    required
-                />
-                <button type="submit">next</button>
-            </form>
-            <style jsx>{`
+  const handleStartDateChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setStartDate(e.target.value);
+  };
+
+  const handleEndDateChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setEndDate(e.target.value);
+  };
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    // Assuming you will handle the form data here or pass it to the next page
+    router.push('/categories'); // Update the path as per your flow
+  };
+
+  return (
+    <div className="container">
+      <h1>Enter Your Information</h1>
+      <form onSubmit={handleSubmit}>
+        <label htmlFor="name">Name:</label>
+        <input
+          type="text"
+          id="name"
+          value={name}
+          onChange={handleNameChange}
+          required
+        />
+        <label htmlFor="startDate">Budget Start Date:</label>
+        <InputMask
+          mask="9999-99-99"
+          value={startDate}
+          onChange={handleStartDateChange}
+          placeholder="yyyy-mm-dd"
+        >
+          {(inputProps) => <input {...inputProps} type="text" />}
+        </InputMask>
+        <label htmlFor="endDate">Budget End Date:</label>
+        <InputMask
+          mask="9999-99-99"
+          value={endDate}
+          onChange={handleEndDateChange}
+          placeholder="yyyy-mm-dd"
+        >
+          {(inputProps) => <input {...inputProps} type="text" />}
+        </InputMask>
+        <button type="submit">Next</button>
+      </form>
+      <style jsx>{`
         .container {
           display: flex;
           flex-direction: column;

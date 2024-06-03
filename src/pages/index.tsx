@@ -4,18 +4,15 @@ import { FormEvent } from 'react';
 const Home: React.FC = () => {
   const router = useRouter();
 
-  const handleSubmit = () => {
-    router.push('/name-and-period');
-  };
-
   return (
     <div className="container">
       <img src="/logo.png" alt="cashew logo" className="logo" />
       <h1> welcome to cashew </h1>
       <p> a simple tool to help you make a pretty fancy budget </p>
-      <form onSubmit={handleSubmit}>
-        <button onClick={handleSubmit}> get started </button>
-      </form>
+      <button onClick={() => router.push('name-and-period')}>
+        get started 
+      </button>
+      
 
       <style jsx>{`
         .container {
