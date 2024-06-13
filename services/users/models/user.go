@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/brianykl/cashew/services/crypto/client"
 	"github.com/google/uuid"
@@ -27,8 +26,7 @@ func NewUser(email, name, password string) (*User, error) {
 		log.Fatalf("could not connect to crypto service: %v", err)
 	}
 	defer conn.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	ctx := context.Background()
 	cryptoClient := client.NewCryptoClient(conn)
 
 	params := client.Argon2IdParams{
@@ -48,13 +46,13 @@ func NewUser(email, name, password string) (*User, error) {
 		return nil, fmt.Errorf("error decoding hex key: %v", err)
 	}
 
-	encryptedEmail, err := cryptoClient.Encrypt(ctx, email, key)
+	hashedEmail, err := cryptoClient.HashPII(ctx, email, key) // THIS NEEDS TO BE CHANGED TO HMAC
 	if err != nil {
 		log.Printf("error encrypting email: %v", err)
 		return nil, fmt.Errorf("error encrypting email: %v", err)
 	}
 
-	encryptedName, err := cryptoClient.Encrypt(ctx, name, key)
+	hashedName, err := cryptoClient.HashPII(ctx, name, key) // THIS NEEDS TO BE CHANGED TO HMAC
 	if err != nil {
 		log.Printf("error encrypting name: %v", err)
 		return nil, fmt.Errorf("error encrypting name: %v", err)
@@ -66,8 +64,8 @@ func NewUser(email, name, password string) (*User, error) {
 
 	return &User{
 		UserID:   generateUserID(),
-		Email:    encryptedEmail.GetCiphertext(),
-		Name:     encryptedName.GetCiphertext(),
+		Email:    hashedEmail.EncodedHash,
+		Name:     hashedName.EncodedHash,
 		Password: encodedHash.EncodedHash,
 	}, nil
 }

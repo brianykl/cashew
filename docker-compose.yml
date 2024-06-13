@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  crypto:
+    build:
+      context: ./services/crypto
+      dockerfile: Dockerfile
+    container_name: crypto
+    ports:
+      - "5002:5002"
+
+  users:
+    build:
+      context: ./services/users
+      dockerfile: Dockerfile
+    container_name: users
+    ports:
+      - "5001:5001"
+    depends_on:
+      - crypto
+
+  beego-api:
+    build:
+      context: ./cashew-api
+      dockerfile: Dockerfile
+    container_name: cashew-api
+    ports:
+      - "4000:4000"
+    depends_on:
+      - crypto
+      - users

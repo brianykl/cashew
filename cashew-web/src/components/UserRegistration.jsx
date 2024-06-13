@@ -9,6 +9,9 @@ export function UserRegistration() {
         password: '',
         confirmPassword: ''
     });
+    
+    const [successMessage, setSuccessMessage] = useState('');
+    const navigate = useNavigate();
 
     const handleChange = (event) => {
         const { name, value } = event.target;
@@ -36,13 +39,19 @@ export function UserRegistration() {
             body: JSON.stringify({
                 email: userData.email,
                 name: userData.name,
-                password: userData
+                password: userData.password
 
             })
         })
         .then(data => {
             console.log('success:', data);
-
+            setSuccessMessage('user was successfully created!');
+            setUserData({
+                email: '',
+                name: '',
+                password: '',
+                confirmPassword: ''
+            });
             // redirect or do somehting if successful
         })
         .catch((error) => {
@@ -54,6 +63,8 @@ export function UserRegistration() {
     return (
         <div>
             <h1>user registration</h1>
+            {/* <img src={logo} alt="Logo" className="logo"/> */}
+            {successMessage && <div className="success-message">{successMessage}</div>}
             <form onSubmit={handleSubmit}>
                 <input
                     type="text"
@@ -89,6 +100,7 @@ export function UserRegistration() {
                 />
                 <button type="submit">register</button>
             </form>
+            <button className="home-button" onClick={() => navigate('/')}>go to home page</button>
         </div>
     );
 

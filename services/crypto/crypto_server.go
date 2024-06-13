@@ -2,11 +2,11 @@ package main
 
 import (
 	"context"
-	"crypto/aes"
-	"crypto/cipher"
+	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
-	"io"
+	"encoding/hex"
 	"log"
 	"net"
 	"strings"
@@ -15,69 +15,41 @@ import (
 
 	cryptopb "github.com/brianykl/cashew/services/crypto/pb"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type cryptoServer struct {
 	cryptopb.UnimplementedCryptoServiceServer
 }
 
-func (s *cryptoServer) Encrypt(ctx context.Context, req *cryptopb.EncryptRequest) (*cryptopb.EncryptResponse, error) {
-	plaintext := req.Plaintext
-	key := req.Key
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
+func createHMAC(key []byte, data string) string {
+	h := hmac.New(sha256.New, key)
+	h.Write([]byte(data))
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+func (s *cryptoServer) HashPII(ctx context.Context, req *cryptopb.HashPIIRequest) (*cryptopb.HashPIIResponse, error) {
+	if len(req.Key) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "HashPIIRequest: missing key")
 	}
 
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-
-	nonce := make([]byte, gcm.NonceSize())
-	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
-		return nil, err
-	}
-
-	ciphertext := gcm.Seal(nonce, nonce, []byte(plaintext), nil)
-
-	response := cryptopb.EncryptResponse{
-		Ciphertext: base64.StdEncoding.EncodeToString(ciphertext),
+	encodedHash := createHMAC(req.Key, req.Data)
+	response := cryptopb.HashPIIResponse{
+		EncodedHash: encodedHash,
 	}
 	return &response, nil
 }
 
-func (s *cryptoServer) Decrypt(ctx context.Context, req *cryptopb.DecryptRequest) (*cryptopb.DecryptResponse, error) {
-	ciphertext := req.Ciphertext
-	key := req.Key
-
-	data, err := base64.StdEncoding.DecodeString(ciphertext)
-	if err != nil {
-		return nil, err
+func (s *cryptoServer) VerifyPII(ctx context.Context, req *cryptopb.VerifyPIIRequest) (*cryptopb.VerifyPIIResponse, error) {
+	if len(req.Key) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "VerifyPIIRequest: missing key")
 	}
 
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(data) < gcm.NonceSize() {
-		return nil, err
-	}
-
-	nonce, ciphertextData := data[:gcm.NonceSize()], data[gcm.NonceSize():]
-	plaintext, err := gcm.Open(nil, nonce, ciphertextData, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	response := cryptopb.DecryptResponse{
-		Plaintext: string(plaintext),
+	expectedEncodedHash := createHMAC(req.Key, req.Data)
+	isValid := hmac.Equal([]byte(expectedEncodedHash), []byte(req.EncodedHash))
+	response := cryptopb.VerifyPIIResponse{
+		IsValid: isValid,
 	}
 	return &response, nil
 }
@@ -95,7 +67,7 @@ func (s *cryptoServer) HashPassword(ctx context.Context, req *cryptopb.HashPassw
 	}
 
 	hash := argon2.IDKey([]byte(password), salt, params.Iterations, params.Memory, uint8(params.Parallelism), params.KeyLength)
-	encodedHash := base64.RawStdEncoding.EncodeToString(hash) + "$" + base64.RawStdEncoding.EncodeToString(salt)
+	encodedHash := base64.RawStdEncoding.EncodeToString(salt) + "$" + base64.RawStdEncoding.EncodeToString(hash)
 
 	result := cryptopb.HashPasswordResponse{
 		EncodedHash: encodedHash,

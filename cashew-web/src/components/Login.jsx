@@ -8,14 +8,14 @@ export function Login() {
 		event.preventDefault();
 		console.log('login with:', email, password);
 		// api call to authentication service
-		fetch('http://localhost:3000/v1/user/', {
-            method: 'GET',
+		fetch('http://localhost:4000/v1/user/login', {
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                email: userData.email,
-                password: userData
+                email: email,
+                password: password
 
             })
         })

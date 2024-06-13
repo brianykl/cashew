@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             v3.12.4
-// source: proto/user.proto
+// source: user.proto
 
 package proto
 
@@ -32,7 +32,7 @@ type UserServiceClient interface {
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*UserResponse, error)
 	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*UserResponse, error)
 	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UserResponse, error)
-	VerifyUser(ctx context.Context, in *VerifyUserRequest, opts ...grpc.CallOption) (*UserResponse, error)
+	VerifyUser(ctx context.Context, in *VerifyUserRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 }
 
 type userServiceClient struct {
@@ -70,8 +70,8 @@ func (c *userServiceClient) UpdateUser(ctx context.Context, in *UpdateUserReques
 	return out, nil
 }
 
-func (c *userServiceClient) VerifyUser(ctx context.Context, in *VerifyUserRequest, opts ...grpc.CallOption) (*UserResponse, error) {
-	out := new(UserResponse)
+func (c *userServiceClient) VerifyUser(ctx context.Context, in *VerifyUserRequest, opts ...grpc.CallOption) (*LoginResponse, error) {
+	out := new(LoginResponse)
 	err := c.cc.Invoke(ctx, UserService_VerifyUser_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -86,7 +86,7 @@ type UserServiceServer interface {
 	GetUser(context.Context, *GetUserRequest) (*UserResponse, error)
 	CreateUser(context.Context, *CreateUserRequest) (*UserResponse, error)
 	UpdateUser(context.Context, *UpdateUserRequest) (*UserResponse, error)
-	VerifyUser(context.Context, *VerifyUserRequest) (*UserResponse, error)
+	VerifyUser(context.Context, *VerifyUserRequest) (*LoginResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -103,7 +103,7 @@ func (UnimplementedUserServiceServer) CreateUser(context.Context, *CreateUserReq
 func (UnimplementedUserServiceServer) UpdateUser(context.Context, *UpdateUserRequest) (*UserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
 }
-func (UnimplementedUserServiceServer) VerifyUser(context.Context, *VerifyUserRequest) (*UserResponse, error) {
+func (UnimplementedUserServiceServer) VerifyUser(context.Context, *VerifyUserRequest) (*LoginResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method VerifyUser not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
@@ -216,5 +216,5 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/user.proto",
+	Metadata: "user.proto",
 }

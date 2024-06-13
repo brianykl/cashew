@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
+	"encoding/hex"
 	"log"
 	"net"
-	"time"
 
 	"github.com/brianykl/cashew/services/crypto/client"
 	usermodels "github.com/brianykl/cashew/services/users/models"
@@ -49,19 +49,20 @@ func (s *userServer) CreateUser(ctx context.Context, req *userpb.CreateUserReque
 }
 
 // should this function be returning a bool instead of user?
-func (s *userServer) VerifyUser(ctx context.Context, req *userpb.VerifyUserRequest) (*userpb.UserResponse, error) {
+func (s *userServer) VerifyUser(ctx context.Context, req *userpb.VerifyUserRequest) (*userpb.LoginResponse, error) {
 	loginEmail := req.Email
 	log.Printf("verifying user: %s", loginEmail)
-	var key []byte
-	encryptedLoginEmailResponse, err := s.cryptoClient.Encrypt(s.context, loginEmail, key)
+	hexKey := "f13fd7ee2c6346b67aae8863ec68c170d26766a6fe216485ca5bfdfa1c25b233" // need to store somewhere safe
+	key, _ := hex.DecodeString(hexKey)
+	hashedLoginEmailResponse, err := s.cryptoClient.HashPII(s.context, loginEmail, key)
 	if err != nil {
 		log.Printf("failed to encrypt %v", err)
 		return nil, err
 	}
 
-	encryptedLoginEmail := encryptedLoginEmailResponse.Ciphertext
+	hashedLoginEmail := hashedLoginEmailResponse.EncodedHash
 	var user usermodels.User
-	err = s.database.Where("email = ?", encryptedLoginEmail).First(&user).Error
+	err = s.database.Where("email = ?", hashedLoginEmail).First(&user).Error
 	if err != nil {
 		log.Printf("failed to find user with this email %v", err)
 		return nil, err
@@ -86,15 +87,13 @@ func (s *userServer) VerifyUser(ctx context.Context, req *userpb.VerifyUserReque
 
 	if !passwordMatchResponse.IsValid {
 		log.Printf("incorrect password")
-		return nil, nil // should this be returning bool?
+	}
+	if passwordMatchResponse.IsValid {
+		log.Printf("correct credentials. logging in...")
 	}
 
-	log.Printf("correct credentials. logging in...")
-	response := userpb.UserResponse{
-		UserId:   user.UserID,
-		Email:    user.Email, // this is already encrypted/hashed, might seem a little misleading/confusing
-		Name:     user.Name,
-		Password: user.Password,
+	response := userpb.LoginResponse{
+		IsValid: passwordMatchResponse.IsValid,
 	}
 
 	return &response, nil
@@ -174,8 +173,7 @@ func main() {
 		log.Fatalf("could not connect to crypto service: %v", err)
 	}
 	defer conn.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	ctx := context.Background()
 	cc := client.NewCryptoClient(conn)
 
 	db, err := usermodels.Connect()

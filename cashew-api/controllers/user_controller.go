@@ -29,7 +29,7 @@ func (c *UserController) Prepare() {
 	}
 }
 
-func (c *UserController) Post() {
+func (c *UserController) Create() {
 	var inputData struct {
 		Email    string `json:"email"`
 		Name     string `json:"name"`
@@ -47,7 +47,7 @@ func (c *UserController) Post() {
 	c.ServeJSON()
 }
 
-func (c *UserController) Get() {
+func (c *UserController) Login() {
 	var loginInfo struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
@@ -64,42 +64,59 @@ func (c *UserController) Get() {
 	c.ServeJSON()
 }
 
-func (c *UserController) GetUser() {
-	var inputData struct {
-		UserId string `json:"userid"`
-	}
-	json.Unmarshal(c.Ctx.Input.RequestBody, &inputData)
+// func (c *UserController) Get() {
+// 	var loginInfo struct {
+// 		Email    string `json:"email"`
+// 		Password string `json:"password"`
+// 	}
+// 	json.Unmarshal(c.Ctx.Input.RequestBody, &loginInfo)
 
-	response, err := c.UserClient.GetUser(context.Background(), inputData.UserId)
-	if err != nil {
-		c.Data["json"] = map[string]string{"error": err.Error()}
-		c.Ctx.Output.SetStatus(500)
-	} else {
-		c.Data["json"] = response
-	}
-	c.ServeJSON()
-}
+// 	response, err := c.UserClient.VerifyUser(context.Background(), loginInfo.Email, loginInfo.Password)
+// 	if err != nil {
+// 		c.Data["json"] = map[string]string{"error": err.Error()}
+// 		c.Ctx.Output.SetStatus(500)
+// 	} else {
+// 		c.Data["json"] = response
+// 	}
+// 	c.ServeJSON()
+// }
 
-func (c *UserController) UpdateUser() {
-	var inputData struct {
-		UserId   string `json:"userid"`
-		Email    string `json:"email"`
-		Name     string `json:"name"`
-		Password string `json:"password"`
-	}
-	json.Unmarshal(c.Ctx.Input.RequestBody, &inputData)
+// func (c *UserController) GetUser() {
+// 	var inputData struct {
+// 		UserId string `json:"userid"`
+// 	}
+// 	json.Unmarshal(c.Ctx.Input.RequestBody, &inputData)
 
-	response, err := c.UserClient.UpdateUser(
-		context.Background(),
-		inputData.UserId,
-		inputData.Name,
-		inputData.Email,
-		inputData.Password)
-	if err != nil {
-		c.Data["json"] = map[string]string{"error": err.Error()}
-		c.Ctx.Output.SetStatus(500)
-	} else {
-		c.Data["json"] = response
-	}
-	c.ServeJSON()
-}
+// 	response, err := c.UserClient.GetUser(context.Background(), inputData.UserId)
+// 	if err != nil {
+// 		c.Data["json"] = map[string]string{"error": err.Error()}
+// 		c.Ctx.Output.SetStatus(500)
+// 	} else {
+// 		c.Data["json"] = response
+// 	}
+// 	c.ServeJSON()
+// }
+
+// func (c *UserController) UpdateUser() {
+// 	var inputData struct {
+// 		UserId   string `json:"userid"`
+// 		Email    string `json:"email"`
+// 		Name     string `json:"name"`
+// 		Password string `json:"password"`
+// 	}
+// 	json.Unmarshal(c.Ctx.Input.RequestBody, &inputData)
+
+// 	response, err := c.UserClient.UpdateUser(
+// 		context.Background(),
+// 		inputData.UserId,
+// 		inputData.Name,
+// 		inputData.Email,
+// 		inputData.Password)
+// 	if err != nil {
+// 		c.Data["json"] = map[string]string{"error": err.Error()}
+// 		c.Ctx.Output.SetStatus(500)
+// 	} else {
+// 		c.Data["json"] = response
+// 	}
+// 	c.ServeJSON()
+// }

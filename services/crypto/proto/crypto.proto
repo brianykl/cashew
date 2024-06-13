@@ -5,8 +5,8 @@ option go_package = "github.com/brianykl/cashew/services/crypto/proto";
 service CryptoService {
     rpc HashPassword(HashPasswordRequest) returns (HashPasswordResponse);
     rpc VerifyPassword(VerifyPasswordRequest) returns (VerifyPasswordResponse);
-    rpc Encrypt(EncryptRequest) returns (EncryptResponse);
-    rpc Decrypt(DecryptRequest) returns (DecryptResponse);
+    rpc HashPII(HashPIIRequest) returns (HashPIIResponse);
+    rpc VerifyPII(VerifyPIIRequest) returns (VerifyPIIResponse);
 }
 
 message HashPasswordRequest {
@@ -28,22 +28,23 @@ message VerifyPasswordResponse {
     bool isValid = 1;
 }
 
-message EncryptRequest {
-    string plaintext = 1;
+message HashPIIRequest {
+    string data = 1;
     bytes key = 2;
 }
 
-message EncryptResponse {
-    string ciphertext = 1;
+message HashPIIResponse {
+    string encodedHash = 1;
 }
 
-message DecryptRequest {
-    string ciphertext = 1;
-    bytes key = 2;
+message VerifyPIIRequest {
+    string data = 1;
+    string encodedHash = 2;
+    bytes key = 3;
 }
 
-message DecryptResponse {
-    string plaintext = 1;
+message VerifyPIIResponse {
+    bool isValid = 1;
 }
 
 message Argon2idParams {

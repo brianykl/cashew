@@ -21,8 +21,8 @@ const _ = grpc.SupportPackageIsVersion7
 const (
 	CryptoService_HashPassword_FullMethodName   = "/CryptoService/HashPassword"
 	CryptoService_VerifyPassword_FullMethodName = "/CryptoService/VerifyPassword"
-	CryptoService_Encrypt_FullMethodName        = "/CryptoService/Encrypt"
-	CryptoService_Decrypt_FullMethodName        = "/CryptoService/Decrypt"
+	CryptoService_HashPII_FullMethodName        = "/CryptoService/HashPII"
+	CryptoService_VerifyPII_FullMethodName      = "/CryptoService/VerifyPII"
 )
 
 // CryptoServiceClient is the client API for CryptoService service.
@@ -31,8 +31,8 @@ const (
 type CryptoServiceClient interface {
 	HashPassword(ctx context.Context, in *HashPasswordRequest, opts ...grpc.CallOption) (*HashPasswordResponse, error)
 	VerifyPassword(ctx context.Context, in *VerifyPasswordRequest, opts ...grpc.CallOption) (*VerifyPasswordResponse, error)
-	Encrypt(ctx context.Context, in *EncryptRequest, opts ...grpc.CallOption) (*EncryptResponse, error)
-	Decrypt(ctx context.Context, in *DecryptRequest, opts ...grpc.CallOption) (*DecryptResponse, error)
+	HashPII(ctx context.Context, in *HashPIIRequest, opts ...grpc.CallOption) (*HashPIIResponse, error)
+	VerifyPII(ctx context.Context, in *VerifyPIIRequest, opts ...grpc.CallOption) (*VerifyPIIResponse, error)
 }
 
 type cryptoServiceClient struct {
@@ -61,18 +61,18 @@ func (c *cryptoServiceClient) VerifyPassword(ctx context.Context, in *VerifyPass
 	return out, nil
 }
 
-func (c *cryptoServiceClient) Encrypt(ctx context.Context, in *EncryptRequest, opts ...grpc.CallOption) (*EncryptResponse, error) {
-	out := new(EncryptResponse)
-	err := c.cc.Invoke(ctx, CryptoService_Encrypt_FullMethodName, in, out, opts...)
+func (c *cryptoServiceClient) HashPII(ctx context.Context, in *HashPIIRequest, opts ...grpc.CallOption) (*HashPIIResponse, error) {
+	out := new(HashPIIResponse)
+	err := c.cc.Invoke(ctx, CryptoService_HashPII_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *cryptoServiceClient) Decrypt(ctx context.Context, in *DecryptRequest, opts ...grpc.CallOption) (*DecryptResponse, error) {
-	out := new(DecryptResponse)
-	err := c.cc.Invoke(ctx, CryptoService_Decrypt_FullMethodName, in, out, opts...)
+func (c *cryptoServiceClient) VerifyPII(ctx context.Context, in *VerifyPIIRequest, opts ...grpc.CallOption) (*VerifyPIIResponse, error) {
+	out := new(VerifyPIIResponse)
+	err := c.cc.Invoke(ctx, CryptoService_VerifyPII_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -85,8 +85,8 @@ func (c *cryptoServiceClient) Decrypt(ctx context.Context, in *DecryptRequest, o
 type CryptoServiceServer interface {
 	HashPassword(context.Context, *HashPasswordRequest) (*HashPasswordResponse, error)
 	VerifyPassword(context.Context, *VerifyPasswordRequest) (*VerifyPasswordResponse, error)
-	Encrypt(context.Context, *EncryptRequest) (*EncryptResponse, error)
-	Decrypt(context.Context, *DecryptRequest) (*DecryptResponse, error)
+	HashPII(context.Context, *HashPIIRequest) (*HashPIIResponse, error)
+	VerifyPII(context.Context, *VerifyPIIRequest) (*VerifyPIIResponse, error)
 	mustEmbedUnimplementedCryptoServiceServer()
 }
 
@@ -100,11 +100,11 @@ func (UnimplementedCryptoServiceServer) HashPassword(context.Context, *HashPassw
 func (UnimplementedCryptoServiceServer) VerifyPassword(context.Context, *VerifyPasswordRequest) (*VerifyPasswordResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method VerifyPassword not implemented")
 }
-func (UnimplementedCryptoServiceServer) Encrypt(context.Context, *EncryptRequest) (*EncryptResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Encrypt not implemented")
+func (UnimplementedCryptoServiceServer) HashPII(context.Context, *HashPIIRequest) (*HashPIIResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HashPII not implemented")
 }
-func (UnimplementedCryptoServiceServer) Decrypt(context.Context, *DecryptRequest) (*DecryptResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Decrypt not implemented")
+func (UnimplementedCryptoServiceServer) VerifyPII(context.Context, *VerifyPIIRequest) (*VerifyPIIResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method VerifyPII not implemented")
 }
 func (UnimplementedCryptoServiceServer) mustEmbedUnimplementedCryptoServiceServer() {}
 
@@ -155,38 +155,38 @@ func _CryptoService_VerifyPassword_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CryptoService_Encrypt_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(EncryptRequest)
+func _CryptoService_HashPII_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HashPIIRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CryptoServiceServer).Encrypt(ctx, in)
+		return srv.(CryptoServiceServer).HashPII(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: CryptoService_Encrypt_FullMethodName,
+		FullMethod: CryptoService_HashPII_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CryptoServiceServer).Encrypt(ctx, req.(*EncryptRequest))
+		return srv.(CryptoServiceServer).HashPII(ctx, req.(*HashPIIRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CryptoService_Decrypt_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DecryptRequest)
+func _CryptoService_VerifyPII_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VerifyPIIRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CryptoServiceServer).Decrypt(ctx, in)
+		return srv.(CryptoServiceServer).VerifyPII(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: CryptoService_Decrypt_FullMethodName,
+		FullMethod: CryptoService_VerifyPII_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CryptoServiceServer).Decrypt(ctx, req.(*DecryptRequest))
+		return srv.(CryptoServiceServer).VerifyPII(ctx, req.(*VerifyPIIRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -207,12 +207,12 @@ var CryptoService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _CryptoService_VerifyPassword_Handler,
 		},
 		{
-			MethodName: "Encrypt",
-			Handler:    _CryptoService_Encrypt_Handler,
+			MethodName: "HashPII",
+			Handler:    _CryptoService_HashPII_Handler,
 		},
 		{
-			MethodName: "Decrypt",
-			Handler:    _CryptoService_Decrypt_Handler,
+			MethodName: "VerifyPII",
+			Handler:    _CryptoService_VerifyPII_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
