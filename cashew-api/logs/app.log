@@ -1,0 +1,4 @@
+2024/06/13 15:04:28.522  [I] [server.go:281]  http server Running on http://:4000
+2024/06/13 15:04:39.411  [D] [router.go:1305]  |      127.0.0.1|[97;42m 200 [0m| 177.926095ms|   match|[97;46m POST    [0m /v1/user/login   r:/v1/user/login
+2024/06/13 15:05:04.543  [D] [router.go:1305]  |            ::1|[97;42m 200 [0m|       15.9µs| nomatch|[90;47m OPTIONS [0m /v1/user/login
+2024/06/13 15:05:04.690  [D] [router.go:1305]  |            ::1|[97;42m 200 [0m| 145.852392ms|   match|[97;46m POST    [0m /v1/user/login   r:/v1/user/login

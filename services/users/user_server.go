@@ -89,7 +89,8 @@ func (s *userServer) VerifyUser(ctx context.Context, req *userpb.VerifyUserReque
 		log.Printf("incorrect password")
 	}
 	if passwordMatchResponse.IsValid {
-		log.Printf("correct credentials. logging in...")
+		log.Printf("correct credentials.")
+		log.Printf("passwordMatchResponse: %+v\n", passwordMatchResponse)
 	}
 
 	response := userpb.LoginResponse{

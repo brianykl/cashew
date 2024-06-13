@@ -103,6 +103,7 @@ func (s *cryptoServer) VerifyPassword(ctx context.Context, req *cryptopb.VerifyP
 
 	hash := argon2.IDKey([]byte(password), salt, params.Iterations, params.Memory, uint8(params.Parallelism), params.KeyLength)
 	result.IsValid = compareHashes(originalHash, hash)
+	log.Print("password verified: ", result.IsValid)
 	return &result, nil
 }
 

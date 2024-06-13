@@ -19,15 +19,25 @@ export function Login() {
 
             })
         })
+		.then(response => response.json()) 
         .then(data => {
-            console.log('success:', data);
+			console.log('this is data', data)
+            if (data.token) {
+			console.log('success:', data);
+			sessionStorage.setItem('token', data.token);
+			sessionStorage.setItem('email', data.user);
+			console.log('JWT stored successfully:', data.token);
             // redirect or do somehting if successful
+			window.location.href = '/dashboard';
+			} else {
+				alert('unsuccessful login')
+			}
         })
         .catch((error) => {
             console.error("error: ", error);
             alert("unsuccessful login attempt")
         })
-	};
+	};	
 
 	const handleEmailChange = (event) => {
 		setEmail(event.target.value);

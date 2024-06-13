@@ -3,9 +3,12 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	"log"
+	"time"
 
 	beego "github.com/beego/beego/v2/server/web"
 	"github.com/brianykl/cashew/services/users/client"
+	jwt "github.com/dgrijalva/jwt-go"
 )
 
 type UserController struct {
@@ -17,6 +20,13 @@ type UserData struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
+}
+
+var jwtKey = []byte("your_secret_key")
+
+type Claims struct {
+	Email string `json:"email"`
+	jwt.StandardClaims
 }
 
 func (c *UserController) Prepare() {
@@ -58,8 +68,39 @@ func (c *UserController) Login() {
 	if err != nil {
 		c.Data["json"] = map[string]string{"error": err.Error()}
 		c.Ctx.Output.SetStatus(500)
+		c.ServeJSON()
+		return
+	}
+
+	if !response.IsValid {
+		c.Data["json"] = map[string]string{"error": "Invalid credentials"}
+		c.Ctx.Output.SetStatus(401)
 	} else {
-		c.Data["json"] = response
+		expirationTime := time.Now().Add(24 * time.Hour)
+		claims := &Claims{
+			Email: loginInfo.Email,
+			StandardClaims: jwt.StandardClaims{
+				ExpiresAt: expirationTime.Unix(),
+			},
+		}
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+		tokenString, err := token.SignedString(jwtKey)
+		if err != nil {
+			c.Data["json"] = map[string]string{"error": "Failed to generate token"}
+			c.Ctx.Output.SetStatus(500)
+			c.ServeJSON()
+			return
+		}
+
+		responseData := map[string]interface{}{
+			"user":  loginInfo.Email,
+			"token": tokenString,
+		}
+		responseJSON, _ := json.Marshal(responseData)
+		log.Printf("response JSON: %s", responseJSON)
+		c.Data["json"] = responseData
+		c.Ctx.Output.SetStatus(200)
+
 	}
 	c.ServeJSON()
 }
