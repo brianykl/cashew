@@ -1,3 +1,5 @@
 cashew-api/conf/config.yaml
 cashew-api/conf/.plaid.env
+cashew-api/conf/.env.plaid
+.env
 
