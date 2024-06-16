@@ -1,10 +1,15 @@
 import React from 'react';
+import {
+	usePlaidLink,
+	PlaidLinkOptions,
+	PlaidLinkOnSuccess,
+  } from 'react-plaid-link';
 
 export function Dashboard() {
 	const email = sessionStorage.getItem('email');
 
 	const handlePlaidLink = () => {
-		// Implement Plaid Link integration here
+				
 		console.log('plaid link button clicked');
 	};
 

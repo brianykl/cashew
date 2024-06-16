@@ -16,4 +16,6 @@ import (
 func init() {
 	beego.Router("/v1/user", &controllers.UserController{}, "post:Create")
 	beego.Router("/v1/user/login", &controllers.UserController{}, "post:Login")
+	beego.Router("/v1/protected/plaid/link/create", &controllers.PlaidController{}, "get:GenerateLinkToken")
+	beego.Router("/v1/plaid/link/create", &controllers.PlaidController{}, "get:GenerateLinkToken")
 }
