@@ -1,5 +1,6 @@
 # cashew
 personal finance tool to organize recurring spending on things like subscriptions/memberships
+http://3.99.245.251:3000/
 
 - built with Go as the backend, utilizing the Beego microweb framework and a React frontend
 - uses Plaid APIs to access financial data at users' financial institutions
