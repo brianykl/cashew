@@ -1,15 +1,14 @@
-
-
+import { UserProvider } from '@auth0/nextjs-auth0/client';
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html>
-      <body>
-        {children}
-      </body>
+    <html lang="en">
+      <UserProvider>
+        <body>{children}</body>
+      </UserProvider>
     </html>
   );
 }
