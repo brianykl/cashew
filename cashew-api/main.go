@@ -1,75 +1,94 @@
 package main
 
 import (
-	_ "cashew-api/conf"
-	_ "cashew-api/routers"
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
-	"strings"
+	"os"
 
-	// "github.com/beego/beego/v2/core/logs"
-
-	"github.com/beego/beego/v2/core/logs"
-	beego "github.com/beego/beego/v2/server/web"
-	context "github.com/beego/beego/v2/server/web/context"
-	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/joho/godotenv"
 )
 
-var jwtKey = []byte("your_secret_key")
-
-type Claims struct {
-	Email string `json:"email"`
-	jwt.StandardClaims
+type PlaidTokenRequest struct {
+	ClientID     string   `json:"client_id"`
+	Secret       string   `json:"secret"`
+	ClientName   string   `json:"client_name"`
+	User         User     `json:"user"`
+	Products     []string `json:"products"`
+	CountryCodes []string `json:"country_codes"`
+	Language     string   `json:"language"`
+	// Webhook      string   `json:"webhook"`
+	RedirectURI string `json:"redirect_uri"`
 }
 
-func main() {
-
-	if beego.BConfig.RunMode == "dev" {
-		beego.BConfig.WebConfig.DirectoryIndex = true
-		beego.BConfig.WebConfig.StaticDir["/swagger"] = "swagger"
-	}
-	logs.SetLogger(logs.AdapterConsole, `{"level":7, "color":true}`)
-
-	// Set up file logging
-	logs.SetLogger(logs.AdapterFile, `{"filename":"logs/app.log", "level":7}`)
-
-	// Enable function call depth (optional)
-	logs.EnableFuncCallDepth(true)
-	logs.SetLogFuncCallDepth(3)
-
-	beego.InsertFilter("*", beego.BeforeRouter, corsMiddleware)
-	beego.InsertFilter("/v1/protected/*", beego.BeforeRouter, JWTMiddleware())
-	beego.Run()
+// User represents the user object in the Plaid API request
+type User struct {
+	ClientUserID string `json:"client_user_id"`
 }
 
-func corsMiddleware(ctx *context.Context) {
-	ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-	ctx.ResponseWriter.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-	ctx.ResponseWriter.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization")
-	ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
-	if ctx.Request.Method == "OPTIONS" {
-		ctx.ResponseWriter.WriteHeader(200)
+func linkHandler(w http.ResponseWriter, r *http.Request) {
+	// Prepare the request payload
+
+	err := godotenv.Load(".env.local")
+	if err != nil {
+		http.Error(w, "failed to load environment variables", http.StatusInternalServerError)
 		return
 	}
+	plaidRequest := PlaidTokenRequest{
+		ClientID:     os.Getenv("CLIENT_ID"),
+		Secret:       os.Getenv("SANDBOX_SECRET"),
+		ClientName:   "cashew",
+		User:         User{ClientUserID: "unique_user_id"},
+		Products:     []string{"auth"},
+		CountryCodes: []string{"US"},
+		Language:     "en",
+		RedirectURI:  "http://localhost:8080/callback",
+	}
+
+	// Convert the struct to JSON
+	requestBody, err := json.Marshal(plaidRequest)
+	if err != nil {
+		http.Error(w, "Failed to create request", http.StatusInternalServerError)
+		return
+	}
+
+	// Make the POST request to Plaid
+	resp, err := http.Post("https://sandbox.plaid.com/link/token/create", "application/json", bytes.NewBuffer(requestBody))
+	if err != nil {
+		http.Error(w, "Failed to make request to Plaid", http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Read the response from Plaid
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		http.Error(w, "Failed to read response from Plaid", http.StatusInternalServerError)
+		return
+	}
+
+	// Write the Plaid response back to the client
+	log.Printf("plaid response: %s", string(body))
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(resp.StatusCode)
+	w.Write(body)
 }
 
-func JWTMiddleware() beego.FilterFunc {
-	return func(ctx *context.Context) {
-		authHeader := ctx.Input.Header("Authorization")
-		if authHeader == "" {
-			ctx.Abort(http.StatusUnauthorized, "missing authorization header")
-			return
-		}
+// func callbackHandler(w http.ResponseWriter, r *http.Request) {
+// 	code := r.URL.Query().Get("code")
+// }
 
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		claims := &Claims{}
-		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-			return jwtKey, nil
-		})
+func main() {
+	// Register the handlers
+	http.HandleFunc("/link", linkHandler)
+	// http.HandleFunc("/callback", callbackHandler)
 
-		if err != nil || !token.Valid {
-			ctx.Abort(http.StatusUnauthorized, "Invalid token")
-			return
-		}
-		ctx.Input.SetData("email", claims.Email)
+	// Start the server
+	fmt.Println("Starting server on :8080")
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		log.Fatal(err)
 	}
 }
