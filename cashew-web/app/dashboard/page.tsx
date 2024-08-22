@@ -1,11 +1,6 @@
-'use client'
 import { getSession } from "@auth0/nextjs-auth0";
 import { redirect } from "next/navigation";
-import {
-    usePlaidLink,
-    PlaidLinkOptions,
-    PlaidLinkOnSuccess,
-  } from 'react-plaid-link';
+import { DashboardContent } from "../components/dashboardContent";
 
 export default async function Dashboard() {
     const session = await getSession();
@@ -14,21 +9,11 @@ export default async function Dashboard() {
         redirect('api/auth/login')
     }
 
-    // const config: PlaidLinkOptions = {
-    //     onSuccess: (public_token, metadata) => {},
-    //     onExit: (error, metadata) => {},
-    //     onEvent: (eventName, metadata) => {},
-    //     token: 'GENERATED_LINK_TOKEN'
-    // }
-
-    // const {open, exit, ready} = usePlaidLink(config)
-    // // if (ready) {
-    // //     open()
-    // // }
+    const response = await fetch('http://localhost:8080/link');
+    const data = await response.json();
+    const linkToken = data.link_token
 
     return (
-      <div>cashew dashboard
-        <a href="/api/auth/logout">Logout</a>
-      </div>
+        <DashboardContent initialLinkToken={linkToken} />
     );
-  }
+}
