@@ -1,5 +1,5 @@
 'use client'
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
 import { PlaidLinkOnSuccess, PlaidLinkOnSuccessMetadata, usePlaidLink } from "react-plaid-link";
 
@@ -16,7 +16,8 @@ export function LinkContent({initialLinkToken, accessToken}: { initialLinkToken:
 
     const { open, ready } = usePlaidLink({
         token: linkToken,
-        onSuccess: onSuccess
+        onSuccess: onSuccess,
+        // onSuccess: () => {}
     });
 
     return (

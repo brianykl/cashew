@@ -9,7 +9,20 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/plaid/plaid-go/v3/plaid"
 )
+
+var plaidClient *plaid.APIClient
+
+func init() {
+	// Configure Plaid client
+	configuration := plaid.NewConfiguration()
+	configuration.AddDefaultHeader("PLAID-CLIENT-ID", os.Getenv("PLAID_CLIENT_ID"))
+	configuration.AddDefaultHeader("PLAID-SECRET", os.Getenv("PLAID_SECRET"))
+	configuration.UseEnvironment(plaid.Sandbox) // or plaid.Development or plaid.Production
+
+	plaidClient = plaid.NewAPIClient(configuration)
+}
 
 type PlaidTokenRequest struct {
 	ClientID     string   `json:"client_id"`
@@ -76,6 +89,36 @@ func LinkHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(body)
 }
 
+type ExchangeRequest struct {
+	PublicToken string `json:"public_token"`
+}
+
+type ExchangeResponse struct {
+	AccessToken string `json:"access_token"`
+	ItemID      string `json:"item_id"`
+}
+
 func ExchangeHandler(w http.ResponseWriter, r *http.Request) {
-	return
+	var req ExchangeRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	exchangePublicTokenReq := plaid.NewItemPublicTokenExchangeRequest(req.PublicToken)
+	exchangePublicTokenResp, _, err := plaidClient.PlaidApi.ItemPublicTokenExchange(r.Context()).ItemPublicTokenExchangeRequest(*exchangePublicTokenReq).Execute()
+	if err != nil {
+		log.Printf("Error exchanging public token: %v", err)
+		http.Error(w, "Failed to exchange token", http.StatusInternalServerError)
+		return
+	}
+
+	response := ExchangeResponse{
+		AccessToken: exchangePublicTokenResp.GetAccessToken(),
+		ItemID:      exchangePublicTokenResp.GetItemId(),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+	log.Printf("%#v", response)
 }
