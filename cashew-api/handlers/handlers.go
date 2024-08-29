@@ -9,20 +9,7 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
-	"github.com/plaid/plaid-go/v3/plaid"
 )
-
-var plaidClient *plaid.APIClient
-
-func init() {
-	// Configure Plaid client
-	configuration := plaid.NewConfiguration()
-	configuration.AddDefaultHeader("PLAID-CLIENT-ID", os.Getenv("PLAID_CLIENT_ID"))
-	configuration.AddDefaultHeader("PLAID-SECRET", os.Getenv("PLAID_SECRET"))
-	configuration.UseEnvironment(plaid.Sandbox) // or plaid.Development or plaid.Production
-
-	plaidClient = plaid.NewAPIClient(configuration)
-}
 
 type PlaidTokenRequest struct {
 	ClientID     string   `json:"client_id"`
@@ -105,20 +92,21 @@ func ExchangeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-	exchangePublicTokenReq := plaid.NewItemPublicTokenExchangeRequest(req.PublicToken)
-	exchangePublicTokenResp, _, err := plaidClient.PlaidApi.ItemPublicTokenExchange(r.Context()).ItemPublicTokenExchangeRequest(*exchangePublicTokenReq).Execute()
+	requestBody, _ := json.Marshal(map[string]string{
+		"client_id":    os.Getenv("CLIENT_ID"),
+		"secret":       os.Getenv("SANDBOX_SECRET"),
+		"public_token": req.PublicToken,
+	})
+
+	resp, _ := http.Post("https://sandbox.plaid.com/item/public_token/exchange", "application/json", bytes.NewBuffer(requestBody))
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Printf("Error exchanging public token: %v", err)
-		http.Error(w, "Failed to exchange token", http.StatusInternalServerError)
+		http.Error(w, "Failed to read response from Plaid", http.StatusInternalServerError)
 		return
 	}
 
-	response := ExchangeResponse{
-		AccessToken: exchangePublicTokenResp.GetAccessToken(),
-		ItemID:      exchangePublicTokenResp.GetItemId(),
-	}
-
+	log.Printf("plaid response: %s", string(body))
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
-	log.Printf("%#v", response)
+	w.WriteHeader(resp.StatusCode)
+	w.Write(body) // do not include the access token in the response lol, we gotta keep that in the backend
 }

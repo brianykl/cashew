@@ -15,7 +15,6 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
     if (publicToken) {
         try {
             const { accessToken } = await getAccessToken();
-            console.log(accessToken)
             const response = await fetch('http://localhost:8080/protected/exchange', {
                 method: 'POST',
                 headers: {
@@ -24,7 +23,7 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
                 },
                 body: JSON.stringify({public_token: publicToken})
             });
-            exchangeResult = await response.json();
+            exchangeResult = await response.text()
             console.log('Token exchanged successfully:', exchangeResult);
         } catch (error) {
             console.error('Error exchanging token:', error);
