@@ -1,40 +1,36 @@
-'use client'
 
-import { useEffect, useState } from "react"
-import { useSearchParams } from "next/navigation"
 import { DashboardContent } from "../components/dashboardContent"
 import { getAccessToken, getSession } from "@auth0/nextjs-auth0"
 
+type SearchParams = { [key: string]: string | string[] | undefined };
 
-export default async function Dashboard() {
-    const [exchangeResult, setExchangeResult] = useState(null);
-    const searchParams = useSearchParams();
-    const publicToken = searchParams.get('public_token');
+type DashboardProps = {
+    searchParams: SearchParams;
+};
 
-    useEffect(() => {
-        async function exchangeToken() {
-            if (publicToken) {
-                try {
-                    const accessToken = await getAccessToken();
-                    const response = await fetch('http://localhost:8080/exchange', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${accessToken}`
-                        },
-                        body: JSON.stringify({public_token: publicToken})
-                    });
-                    const result = await response.json();
-                    console.log('Token exchanged successfully:', result);
-                    setExchangeResult(result);
-                } catch (error) {
-                    console.error('Error exchanging token:', error);
-                }
-            }
+export default async function Dashboard({ searchParams }: DashboardProps) {
+    const publicToken = searchParams.public_token
+    let exchangeResult = null   
+
+    if (publicToken) {
+        try {
+            const { accessToken } = await getAccessToken();
+            console.log(accessToken)
+            const response = await fetch('http://localhost:8080/protected/exchange', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`
+                },
+                body: JSON.stringify({public_token: publicToken})
+            });
+            exchangeResult = await response.json();
+            console.log('Token exchanged successfully:', exchangeResult);
+        } catch (error) {
+            console.error('Error exchanging token:', error);
         }
-
-        exchangeToken();
-    }, [publicToken]);      
+    }
+  
     return (
         <DashboardContent />
     )
