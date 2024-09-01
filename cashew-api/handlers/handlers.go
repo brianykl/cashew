@@ -85,6 +85,13 @@ type ExchangeResponse struct {
 	ItemID      string `json:"item_id"`
 }
 
+// example response:
+//
+//	{
+//		"access_token": "access-sandbox-c5cf65ec-b58f-4fe1-8a91-f8b4bf383355",
+//		"item_id": "X7yj8NJ8PnFQkr3zENzdIGDDrL9lmeFd9gN8W",
+//		"request_id": "4arMsEAbVi64dYA"
+//	  }
 func ExchangeHandler(w http.ResponseWriter, r *http.Request) {
 	var req ExchangeRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -108,5 +115,9 @@ func ExchangeHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("plaid response: %s", string(body))
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(resp.StatusCode)
-	w.Write(body) // do not include the access token in the response lol, we gotta keep that in the backend
+	if resp.StatusCode != 200 {
+		w.Write(body)
+	} else {
+		// store the access token
+	}
 }
