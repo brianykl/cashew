@@ -1,4 +1,4 @@
-
+import { redirect } from "next/navigation"
 import { DashboardContent } from "../components/dashboardContent"
 import { getAccessToken, getSession } from "@auth0/nextjs-auth0"
 
@@ -9,9 +9,14 @@ type DashboardProps = {
 };
 
 export default async function Dashboard({ searchParams }: DashboardProps) {
-    const publicToken = searchParams.public_token
-    let exchangeResult = null   
+    const publicToken = searchParams.public_token   
+    const session = await getSession();
+    if (!session || !session.user) {
+        redirect('api/auth/login')
+    }
 
+    const userId = session.user.sub;
+      
     if (publicToken) {
         try {
             const { accessToken } = await getAccessToken();
@@ -21,12 +26,21 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${accessToken}`
                 },
-                body: JSON.stringify({public_token: publicToken})
+                body: JSON.stringify({
+                    public_token: publicToken,
+                    user_id: userId
+                })
             });
-            exchangeResult = await response.text()
-            console.log('Token exchanged successfully:', exchangeResult);
-        } catch (error) {
-            console.error('Error exchanging token:', error);
+            const exchangeStatus = await response.status
+            const exchangeBody = await response.body
+            if (exchangeStatus == 200) {
+                console.log('Token exchanged successfully');
+            } else {
+                console.log('Unsuccessful exchange:', exchangeBody);
+            }
+            
+        } catch (error) { 
+            console.error('Unauthorized to exchange:', error);
         }
     }
   

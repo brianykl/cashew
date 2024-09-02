@@ -7,6 +7,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
+
+	"github.com/brianykl/cashew/cashew-api/db"
 
 	"github.com/joho/godotenv"
 )
@@ -78,12 +81,15 @@ func LinkHandler(w http.ResponseWriter, r *http.Request) {
 
 type ExchangeRequest struct {
 	PublicToken string `json:"public_token"`
+	UserId      string `json:"user_id"`
 }
 
 type ExchangeResponse struct {
 	AccessToken string `json:"access_token"`
 	ItemID      string `json:"item_id"`
 }
+
+var TokenManager db.TokenManager
 
 // example response:
 //
@@ -112,12 +118,27 @@ func ExchangeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var exchangeResp struct {
+		AccessToken string `json:"access_token"`
+		ItemID      string `json:"item_id"`
+		RequestID   string `json:"request_id"`
+	}
+
+	err = json.Unmarshal(body, &exchangeResp)
+
 	log.Printf("plaid response: %s", string(body))
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(resp.StatusCode)
+
 	if resp.StatusCode != 200 {
 		w.Write(body)
 	} else {
-		// store the access token
+		err := TokenManager.StoreToken(req.UserId, exchangeResp.AccessToken, 30*24*time.Hour)
+		if err != nil {
+			http.Error(w, "Failed to store token", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+		log.Printf("token storage: success")
 	}
 }

@@ -1,4 +1,4 @@
-module github.com/brianykl/cashew-api
+module github.com/brianykl/cashew/cashew-api
 
 go 1.22
 
