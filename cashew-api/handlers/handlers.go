@@ -142,3 +142,56 @@ func ExchangeHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("token storage: success")
 	}
 }
+
+type PrevConnectionRequest struct {
+	UserId string `json:"user_id"`
+}
+
+func PrevConnectionHandler(w http.ResponseWriter, r *http.Request) {
+	var req ExchangeRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	access_token, err := TokenManager.GetToken(req.UserId)
+	if err != nil {
+		http.Error(w, "Error fetching token", http.StatusBadRequest)
+		log.Printf("Error fetching token %s", err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+	log.Printf("token fetch: success")
+	log.Printf(access_token)
+}
+
+type RecurringTransactionsRequest struct {
+	AccessToken string
+}
+
+func RecurringTransactionsHandler(w http.ResponseWriter, r *http.Request) {
+	var req RecurringTransactionsRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	}
+
+	requestBody, _ := json.Marshal(map[string]string{
+		"client_id":    os.Getenv("CLIENT_ID"),
+		"secret":       os.Getenv("SANDBOX_SECRET"),
+		"access_token": req.AccessToken, // maybe should change this so that this is the only api we call from the frontend
+		"count":        "250",
+	})
+	resp, err := http.Post("https://sandbox.plaid.com/transactions/sync", "application/json", bytes.NewBuffer(requestBody))
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		http.Error(w, "Failed to read response from Plaid", http.StatusInternalServerError)
+		return
+	}
+	log.Printf(string(body))
+
+}
