@@ -91,6 +91,8 @@ type ExchangeResponse struct {
 
 var TokenManager db.TokenManager
 
+var TransactionManager db.TransactionManager
+
 // example response:
 //
 //	{
