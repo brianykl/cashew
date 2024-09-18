@@ -7,22 +7,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
+
+	"github.com/brianykl/cashew/cashew-api/db"
+	"github.com/shopspring/decimal"
 
 	"github.com/joho/godotenv"
-	"github.com/plaid/plaid-go/v3/plaid"
 )
-
-var plaidClient *plaid.APIClient
-
-func init() {
-	// Configure Plaid client
-	configuration := plaid.NewConfiguration()
-	configuration.AddDefaultHeader("PLAID-CLIENT-ID", os.Getenv("PLAID_CLIENT_ID"))
-	configuration.AddDefaultHeader("PLAID-SECRET", os.Getenv("PLAID_SECRET"))
-	configuration.UseEnvironment(plaid.Sandbox) // or plaid.Development or plaid.Production
-
-	plaidClient = plaid.NewAPIClient(configuration)
-}
 
 type PlaidTokenRequest struct {
 	ClientID     string   `json:"client_id"`
@@ -91,6 +82,7 @@ func LinkHandler(w http.ResponseWriter, r *http.Request) {
 
 type ExchangeRequest struct {
 	PublicToken string `json:"public_token"`
+	UserId      string `json:"user_id"`
 }
 
 type ExchangeResponse struct {
@@ -98,6 +90,17 @@ type ExchangeResponse struct {
 	ItemID      string `json:"item_id"`
 }
 
+var TokenManager db.TokenManager
+
+var TransactionManager db.TransactionManager
+
+// example response:
+//
+//	{
+//		"access_token": "access-sandbox-c5cf65ec-b58f-4fe1-8a91-f8b4bf383355",
+//		"item_id": "X7yj8NJ8PnFQkr3zENzdIGDDrL9lmeFd9gN8W",
+//		"request_id": "4arMsEAbVi64dYA"
+//	  }
 func ExchangeHandler(w http.ResponseWriter, r *http.Request) {
 	var req ExchangeRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -105,20 +108,197 @@ func ExchangeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-	exchangePublicTokenReq := plaid.NewItemPublicTokenExchangeRequest(req.PublicToken)
-	exchangePublicTokenResp, _, err := plaidClient.PlaidApi.ItemPublicTokenExchange(r.Context()).ItemPublicTokenExchangeRequest(*exchangePublicTokenReq).Execute()
+	requestBody, _ := json.Marshal(map[string]string{
+		"client_id":    os.Getenv("CLIENT_ID"),
+		"secret":       os.Getenv("SANDBOX_SECRET"),
+		"public_token": req.PublicToken,
+	})
+
+	resp, _ := http.Post("https://sandbox.plaid.com/item/public_token/exchange", "application/json", bytes.NewBuffer(requestBody))
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Printf("Error exchanging public token: %v", err)
-		http.Error(w, "Failed to exchange token", http.StatusInternalServerError)
+		http.Error(w, "Failed to read response from Plaid", http.StatusInternalServerError)
 		return
 	}
 
-	response := ExchangeResponse{
-		AccessToken: exchangePublicTokenResp.GetAccessToken(),
-		ItemID:      exchangePublicTokenResp.GetItemId(),
+	var exchangeResp struct {
+		AccessToken string `json:"access_token"`
+		ItemID      string `json:"item_id"`
+		RequestID   string `json:"request_id"`
+	}
+
+	err = json.Unmarshal(body, &exchangeResp)
+
+	log.Printf("plaid response: %s", string(body))
+
+	if resp.StatusCode != 200 {
+		w.Write(body)
+	} else {
+		err := TokenManager.StoreToken(req.UserId, exchangeResp.AccessToken, 30*24*time.Hour)
+		if err != nil {
+			http.Error(w, "Failed to store token", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+		log.Printf("token storage: success")
+	}
+}
+
+type PrevConnectionRequest struct {
+	UserId string `json:"user_id"`
+}
+
+func PrevConnectionHandler(w http.ResponseWriter, r *http.Request) {
+	var req ExchangeRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	access_token, err := TokenManager.GetToken(req.UserId)
+	if err != nil {
+		http.Error(w, "Error fetching token", http.StatusBadRequest)
+		log.Printf("Error fetching token %s", err)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
-	log.Printf("%#v", response)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+	log.Printf("token fetch: success")
+	log.Printf(access_token)
+}
+
+type TransactionsRequest struct {
+	UserId      string
+	AccessToken string
+}
+
+type PlaidResponse struct {
+	Accounts []Account          `json:"accounts"`
+	Added    []PlaidTransaction `json:"added"`
+}
+
+type Account struct {
+	AccountID string `json:"account_id"`
+	Name      string `json:"name"`
+}
+
+type PlaidTransaction struct {
+	AccountID               string  `json:"account_id"`
+	Amount                  float64 `json:"amount"`
+	ISOCurrencyCode         string  `json:"iso_currency_code"`
+	AuthorizedDate          string  `json:"authorized_date"`
+	Date                    string  `json:"date"`
+	MerchantName            string  `json:"merchant_name"`
+	PaymentChannel          string  `json:"payment_channel"`
+	PersonalFinanceCategory struct {
+		Primary         string `json:"primary"`
+		Detailed        string `json:"detailed"`
+		ConfidenceLevel string `json:"confidence_level"`
+	} `json:"personal_finance_category"`
+}
+
+func TransactionsHandler(w http.ResponseWriter, r *http.Request) {
+	var req TransactionsRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	}
+
+	requestBody, err := json.Marshal(map[string]interface{}{
+		"client_id":    os.Getenv("CLIENT_ID"),
+		"secret":       os.Getenv("SANDBOX_SECRET"),
+		"access_token": req.AccessToken,
+		"count":        250,
+	})
+	if err != nil {
+		http.Error(w, "Failed to create request body", http.StatusInternalServerError)
+		return
+	}
+	resp, err := http.Post("https://sandbox.plaid.com/transactions/sync", "application/json", bytes.NewBuffer(requestBody))
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		http.Error(w, "Failed to read response from Plaid", http.StatusInternalServerError)
+		return
+	}
+	log.Printf(string(body))
+	transactions, _ := parseTransactions(req.UserId, body)
+	// t := transactions[0]
+	// log.Printf("Transaction: AccountId: %s, AccountName: %s, Amount: %s %s, "+
+	// 	"AuthorizedDate: %s, MerchantName: %s, PaymentChannel: %s, "+
+	// 	"PrimaryCategory: %s, DetailedCategory: %s, ConfidenceLevel: %s",
+	// 	t.AccountId, t.AccountName,
+	// 	t.Amount.String(), t.Currency,
+	// 	t.AuthorizedDate.Format(time.RFC3339),
+	// 	t.MerchantName, t.PaymentChannel,
+	// 	t.PrimaryCategory, t.DetailedCategory, t.ConfidenceLevel)
+	TransactionManager.StoreTransactions(r.Context(), transactions)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	response := struct {
+		Transactions []*db.Transaction `json:"transactions"`
+	}{
+		Transactions: transactions,
+	}
+
+	jsonResponse, err := json.Marshal(response)
+	if err != nil {
+		log.Printf("Error marshaling JSON: %v", err)
+		http.Error(w, "Failed to create JSON response", http.StatusInternalServerError)
+		return
+	}
+
+	_, err = w.Write(jsonResponse)
+	if err != nil {
+		log.Printf("Error writing response: %v", err)
+	}
+}
+
+func parseTransactions(user_id string, body []byte) ([]*db.Transaction, error) {
+	var plaidResp PlaidResponse
+	err := json.Unmarshal(body, &plaidResp)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create a map of account IDs to account names
+	accountMap := make(map[string]string)
+	for _, account := range plaidResp.Accounts {
+		accountMap[account.AccountID] = account.Name
+	}
+
+	var transactions []*db.Transaction
+	for _, pt := range plaidResp.Added {
+		// Parse the authorized date
+		authorizedDate, err := time.Parse("2006-01-02", pt.AuthorizedDate)
+		if err != nil {
+			// If authorized date is not available or invalid, use the transaction date
+			authorizedDate, err = time.Parse("2006-01-02", pt.Date)
+			if err != nil {
+				// If both dates are invalid, skip this transaction or handle the error as appropriate
+				continue
+			}
+		}
+
+		transaction := &db.Transaction{
+			UserId:           user_id,
+			AccountId:        pt.AccountID,
+			AccountName:      accountMap[pt.AccountID],
+			Amount:           decimal.NewFromFloat(pt.Amount),
+			Currency:         pt.ISOCurrencyCode,
+			AuthorizedDate:   authorizedDate,
+			MerchantName:     pt.MerchantName,
+			PaymentChannel:   pt.PaymentChannel,
+			PrimaryCategory:  pt.PersonalFinanceCategory.Primary,
+			DetailedCategory: pt.PersonalFinanceCategory.Detailed,
+			ConfidenceLevel:  pt.PersonalFinanceCategory.ConfidenceLevel,
+		}
+		transactions = append(transactions, transaction)
+	}
+
+	return transactions, nil
 }

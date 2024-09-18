@@ -20,12 +20,19 @@ export function LinkContent({initialLinkToken, accessToken}: { initialLinkToken:
         // onSuccess: () => {}
     });
 
+    const handleUsePreviousConnection = () => {
+        router.push('/dashboard');
+    };
+
     return (
         <div>
             <h1>Cashew Link</h1>
             {linkToken && <pre>{linkToken}</pre>}
             <button onClick={() => open()} disabled={!ready}>
                 Connect a bank account
+            </button>
+            <button onClick={handleUsePreviousConnection}>
+                Use Previous Connection
             </button>
             <a href="/api/auth/logout">Logout</a>
         </div>
