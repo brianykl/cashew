@@ -171,3 +171,13 @@ func (ptm *postgresTransactionManager) DeleteTransactions(ctx context.Context, u
 
 	return rowsAffected, nil
 }
+
+func (t Transaction) String() string {
+	return fmt.Sprintf("Transaction{UserId: %s, AccountId: %s, AccountName: %s, "+
+		"Amount: %s %s, AuthorizedDate: %s, MerchantName: %s, PaymentChannel: %s, "+
+		"PrimaryCategory: %s, DetailedCategory: %s, ConfidenceLevel: %s}",
+		t.UserId, t.AccountId, t.AccountName,
+		t.Amount.String(), t.Currency, t.AuthorizedDate.Format(time.RFC3339),
+		t.MerchantName, t.PaymentChannel,
+		t.PrimaryCategory, t.DetailedCategory, t.ConfidenceLevel)
+}
