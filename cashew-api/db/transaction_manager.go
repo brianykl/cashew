@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 
-	"cloud.google.com/go/civil"
 	_ "github.com/lib/pq"
 	"github.com/shopspring/decimal"
 )
@@ -17,7 +17,7 @@ type Transaction struct {
 	AccountName      string
 	Amount           decimal.Decimal
 	Currency         string
-	AuthorizedDate   civil.Date
+	AuthorizedDate   time.Time
 	MerchantName     string
 	PaymentChannel   string
 	PrimaryCategory  string
@@ -27,8 +27,8 @@ type Transaction struct {
 
 type TransactionManager interface {
 	StoreTransactions(ctx context.Context, transactions []*Transaction) error
-	GetTransactions(ctx context.Context, userId string, startDate *civil.Date, endDate *civil.Date, limit int, offset int) ([]*Transaction, error)
-	DeleteTransactions(ctx context.Context, userId string, startDate *civil.Date, endDate *civil.Date) (int64, error)
+	GetTransactions(ctx context.Context, userId string, startDate *time.Time, endDate *time.Time, limit int, offset int) ([]*Transaction, error)
+	DeleteTransactions(ctx context.Context, userId string, startDate *time.Time, endDate *time.Time) (int64, error)
 }
 
 type postgresTransactionManager struct {
@@ -49,7 +49,6 @@ func NewTransactionManager(connDetails string) (TransactionManager, error) {
 	return &postgresTransactionManager{client: db}, nil
 }
 
-// StoreTransactions implements TransactionManager.
 func (ptm *postgresTransactionManager) StoreTransactions(ctx context.Context, transactions []*Transaction) error {
 	tx, err := ptm.client.BeginTx(ctx, nil)
 	if err != nil {
@@ -97,8 +96,7 @@ func (ptm *postgresTransactionManager) StoreTransactions(ctx context.Context, tr
 	return nil
 }
 
-// GetTransactions implements TransactionManager.
-func (ptm *postgresTransactionManager) GetTransactions(ctx context.Context, userId string, startDate *civil.Date, endDate *civil.Date, limit int, offset int) ([]*Transaction, error) {
+func (ptm *postgresTransactionManager) GetTransactions(ctx context.Context, userId string, startDate *time.Time, endDate *time.Time, limit int, offset int) ([]*Transaction, error) {
 	query := `
         SELECT user_id, account_id, account_name, amount, currency, authorized_date, 
                merchant_name, payment_channel, primary_category, detailed_category, confidence_level
@@ -142,8 +140,7 @@ func (ptm *postgresTransactionManager) GetTransactions(ctx context.Context, user
 	return transactions, nil
 }
 
-// DeleteTransactions implements TransactionManager.
-func (ptm *postgresTransactionManager) DeleteTransactions(ctx context.Context, userId string, startDate *civil.Date, endDate *civil.Date) (int64, error) {
+func (ptm *postgresTransactionManager) DeleteTransactions(ctx context.Context, userId string, startDate *time.Time, endDate *time.Time) (int64, error) {
 	tx, err := ptm.client.BeginTx(ctx, nil)
 	if err != nil {
 		return 0, fmt.Errorf("failed to begin transaction: %v", err)
@@ -153,11 +150,12 @@ func (ptm *postgresTransactionManager) DeleteTransactions(ctx context.Context, u
 	query := `
         DELETE FROM transactions
         WHERE user_id = $1
-          AND ($2 IS NULL OR authorized_date >= $2)
-          AND ($3 IS NULL OR authorized_date <= $3)
-        RETURNING id`
+          AND ($2::timestamp IS NULL OR authorized_date >= $2)
+          AND ($3::timestamp IS NULL OR authorized_date <= $3)`
 
-	result, err := tx.ExecContext(ctx, query, userId, startDate, endDate)
+	var result sql.Result
+	result, err = tx.ExecContext(ctx, query, userId, startDate, endDate)
+
 	if err != nil {
 		return 0, fmt.Errorf("failed to delete transactions: %v", err)
 	}
