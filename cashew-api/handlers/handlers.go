@@ -265,7 +265,6 @@ func parseTransactions(user_id string, body []byte) ([]*db.Transaction, error) {
 		return nil, err
 	}
 
-	// Create a map of account IDs to account names
 	accountMap := make(map[string]string)
 	for _, account := range plaidResp.Accounts {
 		accountMap[account.AccountID] = account.Name
@@ -273,13 +272,13 @@ func parseTransactions(user_id string, body []byte) ([]*db.Transaction, error) {
 
 	var transactions []*db.Transaction
 	for _, pt := range plaidResp.Added {
-		// Parse the authorized date
+
 		authorizedDate, err := time.Parse("2006-01-02", pt.AuthorizedDate)
 		if err != nil {
-			// If authorized date is not available or invalid, use the transaction date
+
 			authorizedDate, err = time.Parse("2006-01-02", pt.Date)
 			if err != nil {
-				// If both dates are invalid, skip this transaction or handle the error as appropriate
+
 				continue
 			}
 		}
