@@ -10,8 +10,8 @@ import (
 
 type TokenManager interface {
 	StoreToken(userId, accessToken string, expiration time.Duration) error
-	GetToken(userId string) (string, error)
-	DeleteToken(userId string) error
+	GetTokens(userId string) ([]string, error)
+	DeleteTokens(userId string) error
 }
 
 type redisTokenManager struct {
@@ -32,36 +32,36 @@ func NewTokenManager(addr string) (TokenManager, error) {
 	return &redisTokenManager{client: client}, nil
 }
 
-func (rtm *redisTokenManager) DeleteToken(userId string) error {
+func (rtm *redisTokenManager) DeleteTokens(userId string) error {
 	ctx := context.Background()
-	key := fmt.Sprintf("plaid_token:%s", userId)
+	key := fmt.Sprintf("plaid_tokens:%s", userId)
 
-	_, err := rtm.client.Del(ctx, key).Result()
+	_, err := rtm.client.SRem(ctx, key).Result()
 	if err != nil {
 		return fmt.Errorf("failed to delete token: %v", err)
 	}
 	return nil
 }
 
-func (rtm *redisTokenManager) GetToken(userId string) (string, error) {
+func (rtm *redisTokenManager) GetTokens(userId string) ([]string, error) {
 	ctx := context.Background()
-	key := fmt.Sprintf("plaid_token:%s", userId)
+	key := fmt.Sprintf("plaid_tokens:%s", userId)
 
-	token, err := rtm.client.Get(ctx, key).Result()
+	tokens, err := rtm.client.SMembers(ctx, key).Result()
 	if err == redis.Nil {
-		return "", fmt.Errorf("token not found for user %s", userId)
+		return nil, fmt.Errorf("token not found for user %s", userId)
 	} else if err != nil {
-		return "", fmt.Errorf("failed to retrieve token: %v", err)
+		return nil, fmt.Errorf("failed to retrieve token: %v", err)
 	}
 
-	return token, nil
+	return tokens, nil
 }
 
 func (rtm *redisTokenManager) StoreToken(userId string, accessToken string, expiration time.Duration) error {
 	ctx := context.Background()
-	key := fmt.Sprintf("plaid_token:%s", userId)
+	key := fmt.Sprintf("plaid_tokens:%s", userId)
 
-	err := rtm.client.Set(ctx, key, accessToken, expiration).Err()
+	err := rtm.client.SAdd(ctx, key, accessToken).Err()
 	if err != nil {
 		return fmt.Errorf("failed to store token: %v", err)
 	}
