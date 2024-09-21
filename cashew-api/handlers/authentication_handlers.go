@@ -88,6 +88,7 @@ type ExchangeResponse struct {
 //		"request_id": "4arMsEAbVi64dYA"
 //	  }
 func ExchangeHandler(w http.ResponseWriter, r *http.Request) {
+	log.Printf("RECIEVED")
 	var req ExchangeRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {

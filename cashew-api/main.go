@@ -31,9 +31,9 @@ func main() {
 	tokenManager, err := db.NewTokenManager("localhost:6379")
 	handlers.TokenManager = tokenManager
 
-	http.HandleFunc("/link", handlers.LinkHandler)
-	http.Handle("/protected/exchange", middleware.EnsureValidToken()(http.HandlerFunc(handlers.ExchangeHandler)))
-	http.HandleFunc("/transactions", handlers.TransactionsHandler)
+	http.Handle("/link", middleware.CorsMiddleware(http.HandlerFunc(handlers.LinkHandler)))
+	http.Handle("/protected/exchange", middleware.CorsMiddleware(middleware.EnsureValidToken()(http.HandlerFunc(handlers.ExchangeHandler))))
+	http.Handle("/transactions", middleware.CorsMiddleware(http.HandlerFunc(handlers.TransactionsHandler)))
 	fmt.Println("Starting server on :8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatal(err)

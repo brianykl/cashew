@@ -6,6 +6,6 @@ export const GET = handleAuth({
         authorizationParams: {
             audience: process.env.AUTH0_AUDIENCE
         },
-        returnTo: '/link'
+        returnTo: '/dashboard'
     })
 });

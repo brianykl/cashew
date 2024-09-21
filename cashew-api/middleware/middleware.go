@@ -79,3 +79,27 @@ func (c CustomClaims) HasScope(expectedScope string) bool {
 
 	return false
 }
+
+func CorsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+// EnsureValidTokenWithCors combines JWT validation and CORS handling
+func EnsureValidTokenWithCors() func(next http.Handler) http.Handler {
+	jwtMiddleware := EnsureValidToken()
+
+	return func(next http.Handler) http.Handler {
+		return CorsMiddleware(jwtMiddleware(next))
+	}
+}
