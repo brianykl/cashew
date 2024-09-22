@@ -14,6 +14,11 @@ const config: Config = {
       fontFamily: {
         sans: ['Graphik', 'sans-serif'],
         serif: ['Merriweather', 'serif'],
+      },
+
+      colors: {
+        cashew: '#e0d0b7',
+        leaf: '#A7C957 '
       }
     },
   },

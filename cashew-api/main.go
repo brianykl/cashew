@@ -33,7 +33,8 @@ func main() {
 
 	http.Handle("/link", middleware.CorsMiddleware(http.HandlerFunc(handlers.LinkHandler)))
 	http.Handle("/protected/exchange", middleware.CorsMiddleware(middleware.EnsureValidToken()(http.HandlerFunc(handlers.ExchangeHandler))))
-	http.Handle("/transactions", middleware.CorsMiddleware(http.HandlerFunc(handlers.TransactionsHandler)))
+	http.Handle("/protected/transactions", middleware.CorsMiddleware(middleware.EnsureValidToken()(http.HandlerFunc(handlers.TransactionsHandler))))
+	http.Handle("/protected/accounts", middleware.CorsMiddleware(middleware.EnsureValidToken()(http.HandlerFunc(handlers.AccountsHandler))))
 	fmt.Println("Starting server on :8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatal(err)

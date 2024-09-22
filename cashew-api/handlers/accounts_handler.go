@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"log"
 	"net/http"
 	"os"
 )
@@ -11,7 +12,24 @@ type AccountsRequest struct {
 	UserId string `json:"user_id"`
 }
 
+type AccountName struct {
+	Name     string   `json:"name"`
+	Type     string   `json:"type"`
+	Balances Balances `json:"balances"`
+}
+
+type Balances struct {
+	Available *float64 `json:"available"`
+}
+
+type AccountResponse struct {
+	Name             string  `json:"name"`
+	Type             string  `json:"type"`
+	AvailableBalance float64 `json:"available_balance"`
+}
+
 func AccountsHandler(w http.ResponseWriter, r *http.Request) {
+	log.Printf("PULLING ACCOUNTS")
 	var req AccountsRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -25,6 +43,8 @@ func AccountsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var allAccounts []AccountName
+
 	for _, accessToken := range accessTokens {
 		requestBody, err := json.Marshal(map[string]interface{}{
 			"client_id":    os.Getenv("CLIENT_ID"),
@@ -36,27 +56,35 @@ func AccountsHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Failed to read response from Plaid", http.StatusInternalServerError)
 			return
 		}
-
 		defer resp.Body.Close()
 
 		var data struct {
-			Accounts []struct {
-				Name string `json:"name"`
-			} `json:"accounts"`
+			Accounts []AccountName `json:"accounts"`
 		}
 		if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 			http.Error(w, "failed to parse Plaid response", http.StatusInternalServerError)
 			return
 		}
 
-		accountNames := make([]string, len(data.Accounts))
-		for i, account := range data.Accounts {
-			accountNames[i] = account.Name
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string][]string{"account_names": accountNames})
+		allAccounts = append(allAccounts, data.Accounts...)
 	}
 
+	var responseAccounts []AccountResponse
+
+	for _, account := range allAccounts {
+		availableBalance := 0.0
+		if account.Balances.Available != nil {
+			availableBalance = *account.Balances.Available
+		}
+
+		responseAccount := AccountResponse{
+			Name:             account.Name,
+			Type:             account.Type,
+			AvailableBalance: availableBalance,
+		}
+		responseAccounts = append(responseAccounts, responseAccount)
+	}
+	log.Printf("%v", responseAccounts)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(responseAccounts)
 }
