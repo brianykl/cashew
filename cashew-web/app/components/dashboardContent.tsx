@@ -6,8 +6,8 @@ import {
   PlaidLinkOnSuccessMetadata,
   usePlaidLink,
 } from "react-plaid-link"
-import { refreshAccounts } from "./refreshAccounts"
-import { refreshTransactions } from "./refreshTransactions"
+import { Account, refreshAccounts } from "./refreshAccounts"
+import { Transaction, refreshTransactions } from "./refreshTransactions"
 
 interface DashboardContentProps {
   initialLinkToken: string;
@@ -15,11 +15,22 @@ interface DashboardContentProps {
   userId: string;
 }
 
-interface Account {
-  name: string;
-  type: string;
-  available_balance: number;
-}
+// interface Account {
+//   name: string;
+//   type: string;
+//   available_balance: number;
+// }
+
+
+// interface Transaction {
+//   date: string,
+//   account_name: string,
+//   merchant_name: string,
+//   currency: string,
+//   amount: number,
+//   primary_category: string,
+//   detailed_category: string
+// }
 
 export function DashboardContent({
   initialLinkToken,
@@ -28,6 +39,7 @@ export function DashboardContent({
 }: DashboardContentProps) {
   const [linkToken] = useState(initialLinkToken)
   const [accounts, setAccounts] = useState<Account[]>([])
+  const [transactions, setTransactions] = useState<Transaction[]>([])
   const initialFetchDone = useRef(false);
 
   const onSuccess: PlaidLinkOnSuccess = async (public_token, metadata) => {
@@ -65,18 +77,29 @@ export function DashboardContent({
 
   useEffect(() => {
     if (!initialFetchDone.current) {
-      fetchAccounts();
+      fetchAccounts()
+      fetchTransactions()
       initialFetchDone.current = true;
     }
-  }, []);
+  }, [])
   const fetchAccounts = async () => {
     try {
-      const fetchedAccounts = await refreshAccounts(userId, accessToken);
-      setAccounts(fetchedAccounts);
+      const fetchedAccounts = await refreshAccounts(userId, accessToken)
+      setAccounts(fetchedAccounts)
     } catch (error) {
-      console.error("Error fetching accounts:", error);
+      console.error("error fetching accounts:", error);
     }
   }
+  
+  const fetchTransactions = async () => {{
+    try {
+      const fetchedTransactions = await refreshTransactions(userId, accessToken)
+      setTransactions(fetchedTransactions)
+    }catch (error) {
+      console.error("error fetching transactions:", error);
+    }
+  }
+}
 
   
   return (
@@ -122,7 +145,32 @@ export function DashboardContent({
 
       {/* Main content area */}
       <div className="flex-1 p-10">
-        <h1 className="text-3xl font-bold mb-6">cashew dashboard</h1>
+      <table className="w-full">
+          <thead className="">
+            <tr>
+              <th className="text-left pb-2">date</th>
+              <th className="text-left pb-2">account name</th>
+              <th className="text-left pb-2">merchant</th>
+              <th className="text-left pb-2">currency</th>
+              <th className="text-left pb-2">amount</th>
+              <th className="text-left pb-2">primary category</th>
+              <th className="text-left pb-2">detailed category</th>
+            </tr>
+          </thead>
+          <tbody>
+            {transactions.map((transaction, index) => (
+              <tr key={index} className="border-t">
+                <td className="py-2">{transaction.date}</td>
+                <td className="py-2">{transaction.account_name}</td>
+                <td className="py-2">{transaction.merchant_name}</td>
+                <td className="py-2">{transaction.currency}</td>
+                <td className="py-2">{transaction.amount.toFixed(2)}</td>
+                <td className="py-2">${transaction.primary_category}</td>
+                <td className="py-2">${transaction.detailed_category}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

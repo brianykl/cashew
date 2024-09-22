@@ -1,4 +1,4 @@
-interface Account {
+export interface Account {
   name: string;
   type: string;
   available_balance: number;

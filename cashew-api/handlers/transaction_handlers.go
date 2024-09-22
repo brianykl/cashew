@@ -18,8 +18,7 @@ var TokenManager db.TokenManager
 var TransactionManager db.TransactionManager
 
 type TransactionsRequest struct {
-	UserId      string
-	AccessToken string
+	UserId string `json:"user_id"`
 }
 
 type PlaidResponse struct {
@@ -48,48 +47,52 @@ type PlaidTransaction struct {
 }
 
 func TransactionsHandler(w http.ResponseWriter, r *http.Request) {
+	log.Printf("PULLING TRANSACTIONS")
 	var req TransactionsRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 	}
 
-	requestBody, err := json.Marshal(map[string]interface{}{
-		"client_id":    os.Getenv("CLIENT_ID"),
-		"secret":       os.Getenv("SANDBOX_SECRET"),
-		"access_token": req.AccessToken,
-		"count":        250,
-	})
+	accessTokens, err := TokenManager.GetTokens(req.UserId)
 	if err != nil {
-		http.Error(w, "Failed to create request body", http.StatusInternalServerError)
+		http.Error(w, "did not find access tokens linked to user", http.StatusBadRequest)
 		return
 	}
-	resp, err := http.Post("https://sandbox.plaid.com/transactions/sync", "application/json", bytes.NewBuffer(requestBody))
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		http.Error(w, "Failed to read response from Plaid", http.StatusInternalServerError)
-		return
+
+	var allTransactions []*db.Transaction
+
+	for _, accessToken := range accessTokens {
+		requestBody, err := json.Marshal(map[string]interface{}{
+			"client_id":    os.Getenv("CLIENT_ID"),
+			"secret":       os.Getenv("SANDBOX_SECRET"),
+			"access_token": accessToken,
+			"count":        250,
+		})
+		if err != nil {
+			http.Error(w, "Failed to create request body", http.StatusInternalServerError)
+			return
+		}
+		resp, err := http.Post("https://sandbox.plaid.com/transactions/sync", "application/json", bytes.NewBuffer(requestBody))
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			http.Error(w, "Failed to read response from Plaid", http.StatusInternalServerError)
+			return
+		}
+		// log.Printf(string(body))
+		transactions, _ := parseTransactions(req.UserId, body)
+		allTransactions = append(allTransactions, transactions...)
 	}
-	log.Printf(string(body))
-	transactions, _ := parseTransactions(req.UserId, body)
-	// t := transactions[0]
-	// log.Printf("Transaction: AccountId: %s, AccountName: %s, Amount: %s %s, "+
-	// 	"AuthorizedDate: %s, MerchantName: %s, PaymentChannel: %s, "+
-	// 	"PrimaryCategory: %s, DetailedCategory: %s, ConfidenceLevel: %s",
-	// 	t.AccountId, t.AccountName,
-	// 	t.Amount.String(), t.Currency,
-	// 	t.AuthorizedDate.Format(time.RFC3339),
-	// 	t.MerchantName, t.PaymentChannel,
-	// 	t.PrimaryCategory, t.DetailedCategory, t.ConfidenceLevel)
-	TransactionManager.StoreTransactions(r.Context(), transactions)
+	TransactionManager.StoreTransactions(r.Context(), allTransactions)
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	response := struct {
 		Transactions []*db.Transaction `json:"transactions"`
 	}{
-		Transactions: transactions,
+		Transactions: allTransactions,
 	}
-
+	log.Printf("%v", response)
 	jsonResponse, err := json.Marshal(response)
 	if err != nil {
 		log.Printf("Error marshaling JSON: %v", err)
